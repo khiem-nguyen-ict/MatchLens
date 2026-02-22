@@ -54,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
           profileIdDisplay.textContent = response.profileId || "Unknown";
         } else {
           updateLinkedInProfile.style.display = "none";
+          showMessage("This extension only works on LinkedIn profile pages. Please navigate to a LinkedIn profile to use the optimization features.");
         }
       } catch (error) {
         console.log("Content script not ready or page not a LinkedIn profile");
@@ -124,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Auto-hide after 3 seconds
     setTimeout(() => {
       linkedInMessage.style.display = "none";
-    }, 3000);
+    }, 5000);
   }
 
   // Check LinkedIn page on popup open

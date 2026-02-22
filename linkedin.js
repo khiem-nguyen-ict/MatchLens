@@ -193,7 +193,7 @@ function processLinkedInOptimization(config) {
     chrome.storage.local.set({
       linkedInHeadlineUpdate: {
         profileId,
-        newHeadline: config.newHeadline,
+        ...config,
         timestamp: Date.now(),
       },
     });
@@ -203,7 +203,7 @@ function processLinkedInOptimization(config) {
   // We're on the edit/intro page, wait for the editor to load
   let attempts = 0;
   const maxAttempts = 10;
-  const checkInterval = 500; // ms
+  const checkInterval = 1000; // ms
 
   const waitForEditor = setInterval(() => {
     attempts++;
@@ -282,13 +282,13 @@ window.addEventListener("load", () => {
       const update = data.linkedInHeadlineUpdate;
       // Only apply if it's recent (within last 30 seconds)
       if (Date.now() - update.timestamp < 30000 && isEditIntroPage()) {
-        console.log("Applying pending headline update...");
+        console.log("Applying pending profile update...");
         // Wait a bit for content to load
         setTimeout(() => {
-          processLinkedInOptimization({ newHeadline: update.newHeadline });
+          processLinkedInOptimization(update);
           // Clear the pending update
           chrome.storage.local.remove("linkedInHeadlineUpdate");
-        }, 1000);
+        }, 2500);
       }
     }
   });

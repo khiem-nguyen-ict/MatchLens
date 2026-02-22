@@ -10,7 +10,7 @@
     "128": "icons/icon128.png"
   },
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
-  "host_permissions": ["*://www.linkedin.com/*", "<all_urls>"],
+  "host_permissions": ["*://www.linkedin.com/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -25,13 +25,8 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.linkedin.com/in/*"],
-      "js": ["utils.js", "linkedin.js"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": ["utils.js", "content.js"],
+      "matches": ["*://www.linkedin.com/*"],
+      "js": ["utils.js", "content.js", "linkedin.js"],
       "run_at": "document_idle"
     }
   ]
