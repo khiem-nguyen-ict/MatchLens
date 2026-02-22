@@ -65,7 +65,6 @@ function typeaheadPageWorldLogic(selector, newValue, callbackId) {
         reactProps.onInput({ target: input, bubbles: true });
       }
 
-      console.log("✅ [PageWorld] Waiting for dropdown...");
       await sleep(1500);
 
       const dropdownSelectors = [
@@ -81,7 +80,6 @@ function typeaheadPageWorldLogic(selector, newValue, callbackId) {
       let found = false;
       for (const sel of dropdownSelectors) {
         const items = document.querySelectorAll(sel);
-        console.log("[PageWorld] Checking:", sel, "->", items.length, "items");
         if (items.length > 0) {
           let target = Array.from(items).find((el) =>
             el.textContent
@@ -91,7 +89,6 @@ function typeaheadPageWorldLogic(selector, newValue, callbackId) {
           );
           if (!target) target = items[0];
 
-          console.log("[PageWorld] Clicking:", target.textContent.trim());
           target.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
           target.click();
           target.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
@@ -169,17 +166,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             rule.keys.some((key) => searchString.includes(key)),
           );
           if (match) {
-            console.log(
-              `Mapping field "${searchString}" to value "${match.value}"`,
-            );
             mapping[index] = match.value;
-          } else {
-            console.log(`No match found for field "${searchString}"`);
           }
         }
       });
 
-      console.log("Final mapping to fill:", mapping);
       chrome.tabs.sendMessage(sender.tab.id, { type: "FILL_FORM", mapping });
     });
 
@@ -188,22 +179,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // ---- LinkedIn page detected ----
   if (message.type === "LINKEDIN_PAGE_DETECTED") {
-    console.log("LinkedIn profile detected:", {
-      url: message.url,
-      profileId: message.profileId,
-      timestamp: new Date().toISOString(),
-    });
     return false;
   }
 
   // ---- LinkedIn headline updated ----
   if (message.type === "LINKEDIN_HEADLINE_UPDATED") {
-    console.log("LinkedIn headline updated successfully:", {
-      profileId: message.profileId,
-      newHeadline: message.newHeadline,
-      timestamp: message.timestamp,
-    });
-
+    
     chrome.storage.local.get("linkedInUpdates", (data) => {
       const updates = data.linkedInUpdates || [];
       updates.push({
@@ -220,11 +201,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // ---- Inject typeahead script into page world ----
   if (message.type === "INJECT_TYPEAHEAD_SCRIPT") {
-    console.log(
-      "📨 Background: injecting typeahead script into tab",
-      sender.tab.id,
-    );
-
     chrome.scripting
       .executeScript({
         target: { tabId: sender.tab.id },
@@ -233,7 +209,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         args: [message.selector, message.newValue, message.callbackId],
       })
       .then(() => {
-        console.log("✅ Background: script injected successfully");
         sendResponse({ status: "injected" });
       })
       .catch((err) => {

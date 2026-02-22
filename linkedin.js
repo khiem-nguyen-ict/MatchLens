@@ -258,8 +258,6 @@ function processLinkedInOptimization(config) {
 
 // Listen for messages from popup or background
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("Content script received message:", message);
-
   if (message.type === "OPTIMIZE_LINKEDIN_PROFILE") {
     processLinkedInOptimization(message.config);
     sendResponse({ status: "Processing optimization" });
@@ -285,11 +283,7 @@ window.addEventListener("load", () => {
     if (data.linkedInHeadlineUpdate) {
       const update = data.linkedInHeadlineUpdate;
       if (Date.now() - update.timestamp < 30000 && isEditIntroPage()) {
-        console.log("Applying pending profile update...");
         setTimeout(() => {
-          console.log(
-            "----> Processing LinkedIn optimization after navigation...",
-          );
           processLinkedInOptimization(update);
           chrome.storage.local.remove("linkedInHeadlineUpdate");
         }, 2500);
@@ -300,7 +294,6 @@ window.addEventListener("load", () => {
 
 // Notify background that LinkedIn content script is loaded
 if (isLinkedInProfilePage()) {
-  console.log("LinkedIn profile page detected, content script active");
   chrome.runtime.sendMessage({
     type: "LINKEDIN_PAGE_DETECTED",
     url: window.location.href,
