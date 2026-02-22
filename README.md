@@ -1,58 +1,29 @@
-# MatchLens - Smart Form Filler & LinkedIn Profile Optimizer
+# MatchLens
 
-MatchLens is a powerful Chrome extension that intelligently detects and fills web forms while providing seamless LinkedIn profile optimization with AI-assisted content management.
+MatchLens is a Chrome extension that detects and fills web forms and provides LinkedIn profile editing helpers (headline, industry, about).
 
-## 🎯 Features
+## Key Features
 
-### Form Filling
-- **Auto-detect** form fields on any webpage
-- **Smart matching** of fields based on labels and names
-- **Profile-based** filling using stored user data
-- **JSON configuration** for easy profile management
+- Auto-detects form fields (`input`, `textarea`, `select`) and reports them to the popup UI
+- Auto-fills form fields using a JSON profile stored in Chrome local storage
+- LinkedIn optimization: updates Headline, Industry, and About on LinkedIn edit pages
+- Handles LinkedIn typeahead/autocomplete fields by injecting a small page-world script (via the background service worker)
+- Highlights fields that were modified for visual feedback
 
-### LinkedIn Profile Optimization
-- **Automatic detection** of LinkedIn profile pages
-- **One-click navigation** to profile edit pages
-- **Headline optimization** with custom text
-- **Instant updates** to LinkedIn profile information
-- **Update history** tracking
+## Installation
 
-## 📋 Requirements
+1. Clone or download this repository
+2. Open `chrome://extensions` in Chrome
+3. Enable **Developer mode** (top-right)
+4. Click **Load unpacked** and select this project folder
 
-- Google Chrome browser (version 88+)
-- LinkedIn account for profile optimization features
+## Usage
 
-## 🚀 Installation
+### Configure your profile
+Open the extension popup and paste your profile data in JSON, for example:
 
-### Manual Installation (Development Mode)
-
-1. **Clone or download** this repository to your local machine
-   ```bash
-   git clone <repository-url>
-   cd matchlens
-   ```
-
-2. **Open Chrome Extensions Page**
-   - Navigate to `chrome://extensions/`
-   - Enable **Developer mode** (toggle in top-right corner)
-
-3. **Load the Extension**
-   - Click **"Load unpacked"**
-   - Select the `matchlens` folder
-   - The extension will appear in your extensions list
-
-4. **Pin the Extension** (optional)
-   - Click the extensions icon in Chrome toolbar
-   - Click the pin icon next to "MatchLens"
-
-## 💻 Usage
-
-### Setting Up Your Profile
-
-1. **Click the extension icon** in your Chrome toolbar
-2. **Enter your profile data** as JSON:
-   ```json
-   {
+```json
+{
     "firstName": "Khiem Thanh",
     "lastName": "Nguyen",
     "email": "khiem.nguyen@edu.turkuamk.fi",
@@ -64,202 +35,54 @@ MatchLens is a powerful Chrome extension that intelligently detects and fills we
     "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland",
     "industry": "Software Development"
    }
-3. **Click "Save"** to store your profile locally
-
-### Auto-Filling Forms
-
-1. **Navigate to any webpage** with form fields (name, email, address, etc.)
-2. **The extension automatically detects** the form
-3. Click the extension icon and forms will be **filled using your profile data**
-4. A message confirms successful form detection and filling
-
-### Optimizing LinkedIn Profile
-
-1. **Navigate to your LinkedIn profile** (e.g., `https://www.linkedin.com/in/your-profile-id/`)
-2. **Click the extension icon** to open the popup
-3. **LinkedIn Profile section** will appear showing your profile ID
-4. **Enter your desired headline** (or use the pre-filled example):
-   ```
-   Frontend Technical Lead (React + TypeScript + Cloud)
-   ```
-5. **Click "Edit Intro"**
-6. The extension will:
-   - Navigate through your profile
-   - Update the headline, industry... with the best optimized content
-
-## 🏗️ Project Structure
-
-```
-matchlens/
-├── manifest.json          # MatchLens configuration
-├── popup.html            # Popup UI for MatchLens
-├── popup.js              # Popup functionality
-├── content.js            # Form detection engine
-├── linkedin.js           # LinkedIn optimization module
-├── background.js         # Background service worker
-├── README.md             # Documentation
-└── icons/                # MatchLens extension icons
-    ├── icon16.png
-    ├── icon32.png
-    ├── icon48.png
-    └── icon128.png
 ```
 
-### File Descriptions
+Click **Save** to store the profile locally.
 
-- **manifest.json** - Defines extension permissions, content scripts, and configuration
-- **popup.html** - UI for the extension popup with form and LinkedIn sections
-- **popup.js** - Handles user interactions and communication with content scripts
-- **content.js** - Detects and fills general web forms
-- **linkedin.js** - Handles LinkedIn profile detection and headline updates
-- **background.js** - Service worker that processes messages and maintains update history
+### Fill web forms
+Navigate to any webpage with a form. The extension will detect form fields automatically. Use the popup to trigger filling with your saved profile data.
 
-## 🔒 Privacy & Security
+### Optimize LinkedIn profile
+1. Open a LinkedIn profile (e.g. `https://www.linkedin.com/in/<your-id>/`).
+2. Open the extension popup — the LinkedIn section will appear when a profile is detected.
+3. Click **Edit Intro** to update headline and industry, or **Edit About** to update the About section.
 
-- ✅ **Local storage only** - Your profile data is stored locally on your device
-- ✅ **No server communication** - All processing happens in your browser
-- ✅ **No tracking** - No analytics or user tracking
-- ✅ **Manual control** - You control when forms are filled or profiles updated
+Notes:
+- For LinkedIn typeahead fields (Industry), the extension types into the input and selects the matching dropdown option so LinkedIn will persist the selection on Save.
+- If the content scripts are not pre-injected, the popup will attempt to inject `utils.js` and `linkedin.js` into the active tab and retry detection.
 
-## ⚙️ Technical Details
-
-### Technologies Used
-- **JavaScript (ES6+)** - Extension logic
-- **Chrome Extension API** - Browser integration
-- **Chrome Storage API** - Local data persistence
-
-### Key Components
-
-#### LinkedIn Profile ID Extraction
-- Regex pattern: `/linkedin\.com\/in\/([^/?]+)/`
-- Extracts profile slug from LinkedIn URLs
-
-#### Headline Update Process
-1. Detects contenteditable div with role="textbox"
-2. Updates text content via DOM manipulation
-3. Triggers input, change, and blur events
-4. LinkedIn's React components handle the update
-
-#### Form Field Detection
-- Scans for `<input>`, `<textarea>`, and `<select>` elements
-- Extracts labels, names, placeholders, and types
-- Matches fields against predefined rules
-
-## 🐛 Troubleshooting
-
-### Issue: Extension not detecting forms
-- **Solution**: Refresh the page and wait a few seconds for form detection
-- **Solution**: Check if the form elements are visible (extension skips hidden fields)
-
-### Issue: LinkedIn section not appearing
-- **Solution**: Make sure you're on a LinkedIn profile page (URL contains `/in/`)
-- **Solution**: Refresh the page
-- **Solution**: Reload the extension from `chrome://extensions/`
-
-### Issue: Headline not updating
-- **Solution**: Ensure you're on the LinkedIn edit page or extension navigates within 30 seconds
-- **Solution**: Try manually updating the headline and check browser console for errors
-- **Solution**: Clear browser cache and reload the extension
-
-### Issue: Profile not saving
-- **Solution**: Check if JSON is valid - use an online JSON validator
-- **Solution**: Ensure all required fields are included
-- **Solution**: Check browser storage permissions in Chrome settings
-
-## 📊 Update History
-
-The extension maintains a history of the last 20 LinkedIn profile updates. Access this in developer tools:
-
-```javascript
-// In browser console
-chrome.storage.local.get("linkedInUpdates", (data) => {
-  console.log(data.linkedInUpdates);
-});
-```
-
-## 🔄 Permissions Explained
-
-| Permission | Purpose |
-|-----------|---------|
-| `storage` | Stores your profile data locally |
-| `activeTab` | Access current tab to detect LinkedIn pages |
-| `scripting` | Inject scripts into web pages |
-| `tabs` | Manage tab information |
-| `*://www.linkedin.com/*` | Access LinkedIn domains |
-| `<all_urls>` | Support form filling on any website |
-
-## 📝 Example Profile JSON
+## Project Structure
 
 ```
-{
-  "firstName": "Khiem Thanh",
-  "lastName": "Nguyen",
-  "email": "khiem.nguyen@edu.turkuamk.fi",
-  "city": "Turku",
-  "country": "Finland",
-  "phone": "+35844[REDACTED]",
-  "company": "TMA Solutions",
-  "title": "Frontend Technical Lead",
-  "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland",
-  "industry": "Software Development"
-}
+MatchLens/
+├── manifest.json      # Extension manifest
+├── popup.html         # Popup UI
+├── popup.js           # Popup logic and user interactions
+├── background.js      # Service worker (injects page-world scripts for typeahead)
+├── linkedin.js        # LinkedIn profile editing logic
+├── content.js         # Form detection and filling logic
+├── utils.js           # Shared helper functions
+└── icons/             # Icons used by the extension
 ```
 
-## 🎓 Use Cases
+## Technical Notes
 
-- **Job Applications** - Quickly fill out application forms
-- **LinkedIn Optimization** - Update headline to showcase your skills
-- **Bulk Registrations** - Speed up account creation across multiple sites
-- **Profile Management** - Maintain consistent information across platforms
+- `content.js` scans the DOM for form elements and sends `FORM_DETECTED` messages to the extension.
+- `popup.js` stores user profile JSON in Chrome local storage and sends `OPTIMIZE_LINKEDIN_PROFILE` messages to the content script when updating LinkedIn fields.
+- `linkedin.js` updates `contenteditable` headline fields and coordinates typeahead updates (it may call into `background.js` to inject a small script into the page world so React internals receive native events).
+- `background.js` contains the page-world script used to set native input values and trigger React `onChange` handlers safely.
 
-## ⚖️ Legal Disclaimer
+## Permissions
 
-This extension is provided as-is. Users are responsible for:
-- Complying with website terms of service
-- Using the extension only for legitimate purposes
-- Not violating LinkedIn's terms of service
-- Ensuring personal data compliance (GDPR, etc.)
+- `storage` — store profile data locally
+- `activeTab`, `tabs` — query and target the active tab
+- `scripting` — inject scripts into pages when needed
 
-The author is not liable for misuse or third-party website policies.
+## Troubleshooting
 
-## 🤝 Contributing
+- If the LinkedIn section does not appear in the popup: make sure the active tab URL contains `/in/` and reload the page and extension.
+- If a field appears updated in the UI but does not persist after Save, the extension will retry using a page-world injection to trigger React handlers; reload the page if needed.
 
-To improve this extension:
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+## License
 
-## 📄 License
-
-MIT License - Feel free to modify and distribute
-
-## 👨‍💻 Author
-
-**Khiem Nguyen Thanh**
-- Expertise: Frontend Development, React, TypeScript, Cloud Technologies
-- Email: Contact via LinkedIn
-
-## 🆘 Support
-
-For issues or questions:
-1. Check the **Troubleshooting** section above
-2. Review browser console for error messages
-3. Verify extension permissions in Chrome settings
-4. Reload the extension from `chrome://extensions/`
-
-## 🚀 Future Features (Roadmap)
-
-- [ ] Support for multiple profile templates
-- [ ] Integration with more LinkedIn profile fields
-- [ ] Advanced form matching with ML
-- [ ] Import/export profile configurations
-- [ ] Keyboard shortcuts for quick actions
-- [ ] Support for other job boards (Indeed, Glassdoor, etc.)
-
----
-
-**Version:** 1.0  
-**Last Updated:** February 22, 2026  
-**Status:** Active Development
+MIT
