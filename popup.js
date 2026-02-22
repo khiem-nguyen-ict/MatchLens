@@ -1,9 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const profileTextarea = document.getElementById("profile");
   const saveButton = document.getElementById("save");
-  const updateLinkedInProfile = document.getElementById(
-    "updateLinkedInProfile",
-  );
+  const editIntro = document.getElementById("editIntro");
+  const editAbout = document.getElementById("editAbout");
+  const linkedInSection = document.getElementById("linkedInSection");
   const linkedInMessage = document.getElementById("linkedInMessage");
 
   var profile = null;
@@ -15,6 +15,18 @@ document.addEventListener("DOMContentLoaded", () => {
       profile = data.profile;
     }
   });
+
+  // Helper: return active LinkedIn tab or hide LinkedIn section and return null
+  async function getActiveLinkedInTabOrHide() {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (!tab || !tab.url || !tab.url.includes("linkedin.com")) {
+      return null;
+    }
+    return tab;
+  }
 
   // Save button click handler
   saveButton.addEventListener("click", async () => {
@@ -32,15 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
    */
   async function checkLinkedInPage() {
     try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-
-      if (!tab.url.includes("linkedin.com")) {
-        updateLinkedInProfile.style.display = "none";
-        return;
-      }
+      const tab = await getActiveLinkedInTabOrHide();
+      if (!tab) return;
 
       // Send message to content script to detect if it's a LinkedIn profile page
       try {
@@ -49,23 +54,25 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (response && response.isLinkedInProfile) {
-          updateLinkedInProfile.style.display = "block";
+          linkedInSection.style.display = "flex";
         } else {
-          updateLinkedInProfile.style.display = "none";
-          showMessage("This extension only works on LinkedIn profile pages. Please navigate to a LinkedIn profile to use the optimization features.");
+          linkedInSection.style.display = "none";
+          showMessage(
+            "This extension only works on LinkedIn profile pages. Please navigate to a LinkedIn profile to use the optimization features.", "error",
+          );
         }
       } catch (error) {
-        updateLinkedInProfile.style.display = "none";
+        linkedInSection.style.display = "none";
       }
     } catch (error) {
-      updateLinkedInProfile.style.display = "none";
+      linkedInSection.style.display = "none";
     }
   }
 
   /**
    * Edit Intro
    */
-  updateLinkedInProfile.addEventListener("click", async () => {
+  editIntro.addEventListener("click", async () => {
     if (!profile || !profile.headline || profile.headline.trim() === "") {
       showMessage("Please enter a headline in your profile JSON", "error");
       return;
@@ -76,22 +83,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const [tab] = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
+      const tab = await getActiveLinkedInTabOrHide();
+      if (!tab) return;
 
-      if (!tab.url.includes("linkedin.com")) {
-        showMessage("Not on a LinkedIn profile page", "error");
-        return;
-      }
-
-      updateLinkedInProfile.disabled = true;
+      editIntro.disabled = true;
 
       // Send optimization message to content script
       const response = await chrome.tabs.sendMessage(tab.id, {
         type: "OPTIMIZE_LINKEDIN_PROFILE",
         config: {
+          page: "EDIT_INTRO",
           newHeadline: profile.headline.trim(),
           newIndustry: profile.industry.trim(),
         },
@@ -101,11 +102,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Re-enable button after 2 seconds
       setTimeout(() => {
-        updateLinkedInProfile.disabled = false;
+        editIntro.disabled = false;
       }, 2000);
     } catch (error) {
-      showMessage("Failed to update profile. Please try again.", "error");
-      updateLinkedInProfile.disabled = false;
+      showMessage(
+        `Failed to update intro. Please try again. Error: ${error.message}`,
+        "error",
+      );
+      editIntro.disabled = false;
+    }
+  });
+
+  /**
+   * Edit About
+   */
+  editAbout.addEventListener("click", async () => {
+    if (!profile || !profile.about || profile.about.trim() === "") {
+      showMessage("Please enter an about in your profile JSON", "error");
+      return;
+    }
+    try {
+      const tab = await getActiveLinkedInTabOrHide();
+      if (!tab) return;
+
+      editAbout.disabled = true;
+
+      // Send optimization message to content script
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        type: "OPTIMIZE_LINKEDIN_PROFILE",
+        config: {
+          page: "EDIT_ABOUT",
+          newAbout: profile.about.trim(),
+        },
+      });
+
+      showMessage("Processing...", "success");
+
+      // Re-enable button after 2 seconds
+      setTimeout(() => {
+        editAbout.disabled = false;
+      }, 2000);
+    } catch (error) {
+      showMessage(
+        `Failed to update about. Please try again. Error: ${error.message}`,
+        "error",
+      );
+      editAbout.disabled = false;
     }
   });
 

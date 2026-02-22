@@ -1,6 +1,13 @@
 // LinkedIn Profile Optimizer
 // Detects LinkedIn profile URLs and optimizes profile content
 
+const LinkedInPageType = {
+  PROFILE: "PROFILE",
+  EDIT_INTRO: "EDIT_INTRO",
+  EDIT_ABOUT: "EDIT_ABOUT",
+  OTHER: "OTHER",
+};
+
 /**
  * Extract profile ID from LinkedIn URL
  * Handles: https://www.linkedin.com/in/khiem-nguyen-ict/ -> khiem-nguyen-ict
@@ -15,6 +22,12 @@ function extractProfileId() {
  */
 function isLinkedInProfilePage() {
   return /linkedin\.com\/in\//.test(window.location.href);
+}
+
+function isEditAboutPage() {
+  return /linkedin\.com\/in\/.*\/edit\/forms\/summary\/new/.test(
+    window.location.href,
+  );
 }
 
 /**
@@ -32,16 +45,28 @@ function navigateToEditIntro(profileId) {
   window.location.href = editIntroUrl;
 }
 
+function navigateToEditAbout(profileId) {
+  const editIntroUrl = `https://www.linkedin.com/in/${profileId}/edit/forms/summary/new/`;
+  window.location.href = editIntroUrl;
+}
+
 function getEditor(selector) {
   return document.querySelector(selector);
 }
 
 const FIELD_MAPPING_DICTIONARY = {
   newHeadline: {
+    page: LinkedInPageType.EDIT_INTRO,
     selector: 'div[contenteditable="true"][role="textbox"].tiptap.ProseMirror',
   },
   newIndustry: {
+    page: LinkedInPageType.EDIT_INTRO,
     selector: '[data-testid="typeahead-input"]',
+  },
+  newAbout: {
+    page: LinkedInPageType.EDIT_ABOUT,
+    selector:
+      'textarea[data-view-name="form-add-summary-with-gai-multi-line-text-input"]',
   },
 };
 
@@ -65,7 +90,6 @@ async function updateLinkedInTypeahead(input, newValue) {
 
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
-      console.error("❌ Typeahead timed out - no response from page world");
       resolve(false);
     }, 10000);
 
@@ -80,7 +104,7 @@ async function updateLinkedInTypeahead(input, newValue) {
       { once: true },
     );
 
-    // ✅ Ask background script to do the executeScript (only background can do this)
+    // Ask background script to do the executeScript (only background can do this)
     chrome.runtime.sendMessage(
       {
         type: "INJECT_TYPEAHEAD_SCRIPT",
@@ -88,7 +112,7 @@ async function updateLinkedInTypeahead(input, newValue) {
         newValue,
         callbackId,
       },
-      (response) => {
+      (_response) => {
         if (chrome.runtime.lastError) {
           clearTimeout(timeout);
           resolve(false);
@@ -137,7 +161,7 @@ function isTypeaheadInput(input) {
 /**
  * Helper function to update a field with new text.
  * Supports: contenteditable elements and typeahead/search inputs.
- * ✅ Async to properly await typeahead completion.
+ * Async to properly await typeahead completion.
  */
 async function updateFieldValue(editor, newValue) {
   try {
@@ -155,6 +179,14 @@ async function updateFieldValue(editor, newValue) {
         editor.dispatchEvent(new Event("input", { bubbles: true }));
         editor.dispatchEvent(new Event("change", { bubbles: true }));
       }
+    } else if (editor.tagName === "TEXTAREA") {
+      console.warn(
+        "⚠️ Detected textarea - using direct value update which may not trigger React updates. Selector:",
+        editor,
+      );
+      editor.value = newValue;
+      editor.dispatchEvent(new Event("input", { bubbles: true }));
+      editor.dispatchEvent(new Event("change", { bubbles: true }));
     }
 
     highlightElement(editor);
@@ -184,16 +216,26 @@ function updateTextInElement(element, newText) {
  * ✅ Uses async IIFE inside setInterval to properly await field updates.
  */
 function processLinkedInOptimization(config) {
-  const profileId = extractProfileId();
+  const profileId = extractProfileId() || config.profileId;
 
   if (!profileId) {
     return;
   }
+  if (
+    (config.page === LinkedInPageType.EDIT_INTRO && !isEditIntroPage()) ||
+    (config.page === LinkedInPageType.EDIT_ABOUT && !isEditAboutPage())
+  ) {
+    if (config.page === LinkedInPageType.EDIT_INTRO) {
+      navigateToEditIntro(profileId);
+    } else if (config.page === LinkedInPageType.EDIT_ABOUT) {
+      navigateToEditAbout(profileId);
+    } else {
+      return;
+    }
 
-  if (!isEditIntroPage()) {
-    navigateToEditIntro(profileId);
     chrome.storage.local.set({
-      linkedInHeadlineUpdate: {
+      linkedInDataUpdate: {
+        page: config.page,
         profileId,
         ...config,
         timestamp: Date.now(),
@@ -210,20 +252,24 @@ function processLinkedInOptimization(config) {
     attempts++;
 
     const listOfEditors = {};
+    var expectedFieldsCount = Object.keys(FIELD_MAPPING_DICTIONARY).filter(
+      (key) => FIELD_MAPPING_DICTIONARY[key].page === config.page,
+    ).length;
+
     for (const key in FIELD_MAPPING_DICTIONARY) {
+      if (FIELD_MAPPING_DICTIONARY[key].page !== config.page) {
+        continue; // skip fields not relevant to the current page
+      }
       const editor = getEditor(FIELD_MAPPING_DICTIONARY[key].selector);
       if (editor) {
         listOfEditors[key] = editor;
       }
     }
 
-    if (
-      Object.keys(listOfEditors).length >=
-      Object.keys(FIELD_MAPPING_DICTIONARY).length
-    ) {
+    if (Object.keys(listOfEditors).length >= expectedFieldsCount) {
       clearInterval(waitForEditor);
 
-      // ✅ Async IIFE — sequentially awaits each field update
+      // Async IIFE — sequentially awaits each field update
       (async () => {
         const results = {};
 
@@ -236,8 +282,6 @@ function processLinkedInOptimization(config) {
         }
 
         const anySuccess = Object.values(results).some(Boolean);
-
-       
 
         // Notify background if at least one field succeeded
         if (anySuccess) {
@@ -272,20 +316,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({
       isLinkedInProfile: isLinkedInProfilePage(),
       profileId: extractProfileId(),
-      isEditPage: isEditIntroPage(),
     });
   }
 });
 
 // On page load, check if we need to apply a pending update after navigation
 window.addEventListener("load", () => {
-  chrome.storage.local.get("linkedInHeadlineUpdate", (data) => {
-    if (data.linkedInHeadlineUpdate) {
-      const update = data.linkedInHeadlineUpdate;
-      if (Date.now() - update.timestamp < 30000 && isEditIntroPage()) {
+  chrome.storage.local.get("linkedInDataUpdate", (data) => {
+    if (data.linkedInDataUpdate) {
+      const update = data.linkedInDataUpdate;
+      if (
+        (Date.now() - update.timestamp < 30000 &&
+          isEditIntroPage() &&
+          update.page === LinkedInPageType.EDIT_INTRO) ||
+        (isEditAboutPage() && update.page === LinkedInPageType.EDIT_ABOUT)
+      ) {
         setTimeout(() => {
           processLinkedInOptimization(update);
-          chrome.storage.local.remove("linkedInHeadlineUpdate");
+          chrome.storage.local.remove("linkedInDataUpdate");
         }, 2500);
       }
     }
