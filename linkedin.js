@@ -32,42 +32,121 @@ function navigateToEditIntro(profileId) {
   window.location.href = editIntroUrl;
 }
 
+function getEditor(selector) {
+  return document.querySelector(selector);
+}
+
+const FIELD_MAPPING_DICTIONARY = {
+  newHeadline: {
+    selector: 'div[contenteditable="true"][role="textbox"].tiptap.ProseMirror',
+  },
+  newIndustry: {
+    selector: '[data-testid="typeahead-input"]',
+  },
+};
+
 /**
- * Optimize LinkedIn Profile with new text
- * Returns: true if successful, false otherwise
+ * Helper function to update a field with new text
+ * Supports: contenteditable elements and typeahead/search inputs
  */
-function updateHeadline(newHeadlineText) {
-    try {
-        // Find the contenteditable headline element
-        // LinkedIn uses multiple nested divs, look for contenteditable with role="textbox"
-        const headlineEditor = document.querySelector(
-            'div[contenteditable="true"][role="textbox"].tiptap.ProseMirror'
-        );
-
-        if (!headlineEditor) {
-            console.error(
-                "Could not find headline editor. Checking for alternative selectors..."
-            );
-            // Try alternative selector
-            const alternativeEditor = document.querySelector(
-                'div[contenteditable="true"][role="textbox"]'
-            );
-            if (!alternativeEditor) {
-                console.error("Alternative selector also failed");
-                return false;
-            }
-            updateTextInElement(alternativeEditor, newHeadlineText);
-            highlightElement(alternativeEditor);
-            return true;
-        }
-
-        updateTextInElement(headlineEditor, newHeadlineText);
-        highlightElement(headlineEditor);
-        return true;
-    } catch (error) {
-        console.error("Error updating headline:", error);
-        return false;
+function updateFieldValue(editor, newValue) {
+  try {
+    if (!editor) {
+      console.error("Editor not found");
+      return false;
     }
+
+    // Handle contenteditable elements (like headline)
+    if (editor.contentEditable === "true") {
+      updateTextInElement(editor, newValue);
+    }
+    // Handle input fields (like typeahead/search inputs)
+    else if (editor.tagName === "INPUT") {
+      // Clear the field
+      editor.value = "";
+      editor.dispatchEvent(new Event("input", { bubbles: true }));
+
+      // Simulate typing character by character to trigger autocomplete
+      let charIndex = 0;
+      const typeNextChar = () => {
+        if (charIndex < newValue.length) {
+          editor.value = newValue.substring(0, charIndex + 1);
+          editor.dispatchEvent(new Event("input", { bubbles: true }));
+          charIndex++;
+          setTimeout(typeNextChar, 50); // 50ms delay between characters
+        } else {
+          // Typing complete, wait for dropdown to appear and select the matching option
+          setTimeout(() => {
+            selectTypeaheadOption(editor, newValue);
+          }, 300); // Wait for dropdown to render
+        }
+      };
+      typeNextChar();
+    }
+
+    highlightElement(editor);
+    return true;
+  } catch (error) {
+    console.error("Error updating field:", error);
+  }
+  return false;
+}
+
+/**
+ * Helper function to select an option from a typeahead dropdown
+ */
+function selectTypeaheadOption(inputElement, optionText) {
+  try {
+    // Find the dropdown container - usually a sibling or near the input
+    const container =
+      inputElement.closest(
+        '[role="combobox"], .typeahead-container, [data-testid*="typeahead"]',
+      )?.parentElement ||
+      inputElement.parentElement?.parentElement?.parentElement;
+
+    if (!container) {
+      console.warn("Could not find typeahead dropdown container");
+      return false;
+    }
+
+    // Look for dropdown options - try multiple selectors
+    const dropdownOptions = container.querySelectorAll(
+      '[role="option"], [data-testid*="option"], li, [class*="option"]',
+    );
+
+    if (dropdownOptions.length === 0) {
+      console.warn("No dropdown options found");
+      // Still dispatch events even if we can't find dropdown
+      inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+      inputElement.dispatchEvent(new Event("blur", { bubbles: true }));
+      return false;
+    }
+
+    // Find the option that matches the text we're looking for
+    for (let option of dropdownOptions) {
+      const optionContent = option.textContent.toLowerCase().trim();
+      if (optionContent.includes(optionText.toLowerCase())) {
+        console.log("Found matching dropdown option:", optionContent);
+        option.click();
+
+        // Dispatch events after clicking
+        setTimeout(() => {
+          inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+          inputElement.dispatchEvent(new Event("blur", { bubbles: true }));
+        }, 100);
+        return true;
+      }
+    }
+
+    console.warn("No matching option found in dropdown for:", optionText);
+    // Dispatch events anyway
+    inputElement.dispatchEvent(new Event("change", { bubbles: true }));
+    inputElement.dispatchEvent(new Event("blur", { bubbles: true }));
+    return false;
+  } catch (error) {
+    console.error("Error selecting typeahead option:", error);
+    return false;
+  }
 }
 
 /**
@@ -91,8 +170,6 @@ function updateTextInElement(element, newText) {
   element.dispatchEvent(inputEvent);
   element.dispatchEvent(changeEvent);
   element.dispatchEvent(blurEvent);
-
-  console.log("Headline updated to:", newText);
 }
 
 /**
@@ -130,26 +207,43 @@ function processLinkedInOptimization(config) {
 
   const waitForEditor = setInterval(() => {
     attempts++;
-    const headlineEditor = document.querySelector(
-      'div[contenteditable="true"][role="textbox"]'
-    );
 
-    if (headlineEditor && config.newHeadline) {
+    const listOfEditors = {};
+    for (const key in FIELD_MAPPING_DICTIONARY) {
+      const editor = getEditor(FIELD_MAPPING_DICTIONARY[key].selector);
+      if (editor) {
+        listOfEditors[key] = editor;
+      }
+    }
+
+    if (Object.keys(listOfEditors).length > 0) {
       clearInterval(waitForEditor);
-      console.log("Editor found, updating headline...");
-      const success = updateHeadline(config.newHeadline);
+      let fieldsFound = Object.keys(listOfEditors).join(", ");
+      console.log("Editor found, updating fields:", fieldsFound);
+      let success = false;
+      for (const key in listOfEditors) {
+        const editor = listOfEditors[key];
+        if (key && config[key]) {
+          let result = updateFieldValue(editor, config[key]);
+          success = result || success;
+          console.log(
+            `Updated ${key} field with value: ${config[key]} and the result was ${result}`,
+          );
+        }
+      }
 
       if (success) {
-        console.log("Headline successfully updated!");
+        console.log("Headline and industry successfully updated!");
         // Notify background script of success
         chrome.runtime.sendMessage({
           type: "LINKEDIN_HEADLINE_UPDATED",
           profileId,
           newHeadline: config.newHeadline,
+          newIndustry: config.newIndustry,
           timestamp: new Date().toISOString(),
         });
       } else {
-        console.error("Failed to update headline");
+        console.error("Failed to update fields:", fieldsFound);
       }
     } else if (attempts >= maxAttempts) {
       clearInterval(waitForEditor);

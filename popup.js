@@ -22,9 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const profile = JSON.parse(profileTextarea.value);
       await chrome.storage.local.set({ profile });
-      alert("Your profile has been saved!");
+      showMessage("Your profile has been saved!", "success");
     } catch (err) {
-      alert("Invalid JSON! Please fix it before saving.");
+      showMessage("Invalid JSON! Please fix it before saving.", "error");
     }
   });
 
@@ -69,10 +69,12 @@ document.addEventListener("DOMContentLoaded", () => {
    * Optimize LinkedIn Profile
    */
   updateLinkedInProfile.addEventListener("click", async () => {
-    const newHeadline = profile?.headline;
-
-    if (!newHeadline || newHeadline.trim() === "") {
+    if (!profile || !profile.headline || profile.headline.trim() === "") {
       showMessage("Please enter a headline in your profile JSON", "error");
+      return;
+    }
+    if (!profile.industry || profile.industry.trim() === "") {
+      showMessage("Please enter an industry in your profile JSON", "error");
       return;
     }
 
@@ -83,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!tab.url.includes("linkedin.com")) {
-        showMessage("Not on LinkedIn", "error");
+        showMessage("Not on a LinkedIn profile page", "error");
         return;
       }
 
@@ -93,7 +95,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await chrome.tabs.sendMessage(tab.id, {
         type: "OPTIMIZE_LINKEDIN_PROFILE",
         config: {
-          newHeadline,
+          newHeadline: profile.headline.trim(),
+          newIndustry: profile.industry.trim(),
         },
       });
 
@@ -104,8 +107,8 @@ document.addEventListener("DOMContentLoaded", () => {
         updateLinkedInProfile.disabled = false;
       }, 2000);
     } catch (error) {
-      console.error("Error updating headline:", error);
-      showMessage("Failed to update headline. Please try again.", "error");
+      console.error("Error updating profile:", error);
+      showMessage("Failed to update profile. Please try again.", "error");
       updateLinkedInProfile.disabled = false;
     }
   });
@@ -113,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /**
    * Display message to user
    */
-  function showMessage(text, type) {
+  function showMessage(text, type = "success") {
     linkedInMessage.textContent = text;
     linkedInMessage.style.display = "block";
     linkedInMessage.style.color = type === "error" ? "#e74c3c" : "#27ae60";

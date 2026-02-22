@@ -53,7 +53,7 @@ MatchLens is a powerful Chrome extension that intelligently detects and fills we
 2. **Enter your profile data** as JSON:
    ```json
    {
-    "firstName": "Khiem",
+    "firstName": "Khiem Thanh",
     "lastName": "Nguyen",
     "email": "khiem.nguyen@edu.turkuamk.fi",
     "city": "Turku",
@@ -61,7 +61,8 @@ MatchLens is a powerful Chrome extension that intelligently detects and fills we
     "phone": "+35844[REDACTED]",
     "company": "TMA Solutions",
     "title": "Frontend Technical Lead",
-    "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland"
+    "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland",
+    "industry": "Software Development"
    }
 3. **Click "Save"** to store your profile locally
 
@@ -192,7 +193,7 @@ chrome.storage.local.get("linkedInUpdates", (data) => {
 
 ```
 {
-  "firstName": "Khiem",
+  "firstName": "Khiem Thanh",
   "lastName": "Nguyen",
   "email": "khiem.nguyen@edu.turkuamk.fi",
   "city": "Turku",
@@ -200,7 +201,8 @@ chrome.storage.local.get("linkedInUpdates", (data) => {
   "phone": "+35844[REDACTED]",
   "company": "TMA Solutions",
   "title": "Frontend Technical Lead",
-  "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland"
+  "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland",
+  "industry": "Software Development"
 }
 ```
 
