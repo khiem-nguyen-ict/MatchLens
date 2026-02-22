@@ -57,11 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
           showMessage("This extension only works on LinkedIn profile pages. Please navigate to a LinkedIn profile to use the optimization features.");
         }
       } catch (error) {
-        console.log("Content script not ready or page not a LinkedIn profile");
         updateLinkedInProfile.style.display = "none";
       }
     } catch (error) {
-      console.error("Error checking LinkedIn page:", error);
       updateLinkedInProfile.style.display = "none";
     }
   }
@@ -108,7 +106,6 @@ document.addEventListener("DOMContentLoaded", () => {
         updateLinkedInProfile.disabled = false;
       }, 2000);
     } catch (error) {
-      console.error("Error updating profile:", error);
       showMessage("Failed to update profile. Please try again.", "error");
       updateLinkedInProfile.disabled = false;
     }

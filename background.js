@@ -21,7 +21,7 @@ function typeaheadPageWorldLogic(selector, newValue, callbackId) {
         );
 
       const reactProps = input[reactPropsKey];
-      console.log("✅ [PageWorld] React props found");
+
 
       input.focus();
       await sleep(300);
@@ -43,7 +43,7 @@ function typeaheadPageWorldLogic(selector, newValue, callbackId) {
       nativeSetter.call(input, "");
       input.dispatchEvent(new Event("input", { bubbles: true }));
       await sleep(200);
-      console.log("🗑️ [PageWorld] Cleared value");
+
 
       nativeSetter.call(input, newValue);
 

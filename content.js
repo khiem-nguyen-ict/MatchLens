@@ -3,13 +3,9 @@ function extractFormFields() {
 
   const elements = document.querySelectorAll("input, textarea, select");
 
-  console.log(`Found ${elements.length} input/textarea/select elements`);
-
   elements.forEach((el, index) => {
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return; // skip hidden
-
-    console.log("Found field");
     fields.push({
       index,
       tag: el.tagName.toLowerCase(),
@@ -27,10 +23,8 @@ function extractFormFields() {
 }
 
 window.addEventListener("load", () => {
-  console.log("Page loaded, extracting form fields...");
   setTimeout(() => {
     const fields = extractFormFields();
-    console.log("Detected form fields:", fields);
     if (fields.length > 0) {
       chrome.runtime.sendMessage({
         type: "FORM_DETECTED",

@@ -55,15 +55,11 @@ function sleep(ms) {
  * bypassing Chrome extension's isolated world restriction.
  */
 async function updateLinkedInTypeahead(input, newValue) {
-  console.log("🔍 Requesting background to inject typeahead updater...");
-
   const selector = input.getAttribute("data-testid")
     ? `[data-testid="${input.getAttribute("data-testid")}"]`
     : input.id
       ? `#${input.id}`
       : '[data-testid="typeahead-input"]';
-
-  console.log("🔍 Using selector:", selector);
 
   const callbackId = `__linkedIn_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 
@@ -79,11 +75,6 @@ async function updateLinkedInTypeahead(input, newValue) {
       (e) => {
         clearTimeout(timeout);
         const result = e.detail;
-        if (result.success) {
-          console.log("✅ Typeahead updated:", result.result);
-        } else {
-          console.error("❌ Typeahead update failed:", result.error);
-        }
         resolve(result.success);
       },
       { once: true },
@@ -99,14 +90,8 @@ async function updateLinkedInTypeahead(input, newValue) {
       },
       (response) => {
         if (chrome.runtime.lastError) {
-          console.error(
-            "❌ Background message failed:",
-            chrome.runtime.lastError.message,
-          );
           clearTimeout(timeout);
           resolve(false);
-        } else {
-          console.log("📨 Background acknowledged:", response);
         }
       },
     );
@@ -157,19 +142,15 @@ function isTypeaheadInput(input) {
 async function updateFieldValue(editor, newValue) {
   try {
     if (!editor) {
-      console.error("Editor not found");
       return false;
     }
 
     if (editor.contentEditable === "true") {
-      console.log("🖊️ Contenteditable detected");
       updateTextInElement(editor, newValue);
     } else if (editor.tagName === "INPUT") {
       if (isTypeaheadInput(editor)) {
-        console.log("🔍 Typeahead input detected");
-        await updateLinkedInTypeahead(editor, newValue); // ✅ properly awaited
+        await updateLinkedInTypeahead(editor, newValue);
       } else {
-        console.log("📝 Normal input detected");
         editor.value = newValue;
         editor.dispatchEvent(new Event("input", { bubbles: true }));
         editor.dispatchEvent(new Event("change", { bubbles: true }));
@@ -179,9 +160,8 @@ async function updateFieldValue(editor, newValue) {
     highlightElement(editor);
     return true;
   } catch (error) {
-    console.error("Error updating field:", error);
+    return false;
   }
-  return false;
 }
 
 /**
@@ -207,14 +187,10 @@ function processLinkedInOptimization(config) {
   const profileId = extractProfileId();
 
   if (!profileId) {
-    console.error("Could not extract profile ID from URL");
     return;
   }
 
-  console.log("Detected LinkedIn Profile ID:", profileId);
-
   if (!isEditIntroPage()) {
-    console.log("Not on edit/intro page, navigating...");
     navigateToEditIntro(profileId);
     chrome.storage.local.set({
       linkedInHeadlineUpdate: {
@@ -246,37 +222,22 @@ function processLinkedInOptimization(config) {
       Object.keys(FIELD_MAPPING_DICTIONARY).length
     ) {
       clearInterval(waitForEditor);
-      const fieldsFound = Object.keys(listOfEditors).join(", ");
-      console.log("Editor found, updating fields:", fieldsFound);
 
       // ✅ Async IIFE — sequentially awaits each field update
       (async () => {
-        const results = {}; // ✅ Track each field result individually
+        const results = {};
 
         for (const key in listOfEditors) {
           const editor = listOfEditors[key];
           if (key && config[key]) {
             const result = await updateFieldValue(editor, config[key]);
             results[key] = result;
-            console.log(
-              `Set ${key} = "${config[key]}": ${result ? "✅ Success" : "❌ Failed"}`,
-            );
           }
         }
 
-        const allSuccess = Object.values(results).every(Boolean);
         const anySuccess = Object.values(results).some(Boolean);
 
-        if (allSuccess) {
-          console.log("✅ All fields successfully updated!");
-        } else if (anySuccess) {
-          const failed = Object.entries(results)
-            .filter(([, v]) => !v)
-            .map(([k]) => k);
-          console.warn("⚠️ Partial success. Failed fields:", failed.join(", "));
-        } else {
-          console.error("❌ All fields failed to update");
-        }
+       
 
         // Notify background if at least one field succeeded
         if (anySuccess) {
@@ -291,7 +252,6 @@ function processLinkedInOptimization(config) {
       })();
     } else if (attempts >= maxAttempts) {
       clearInterval(waitForEditor);
-      console.error("Editor not found after maximum attempts");
     }
   }, checkInterval);
 }
