@@ -82,11 +82,10 @@ MatchLens is a powerful Chrome extension that intelligently detects and fills we
    ```
    Frontend Technical Lead (React + TypeScript + Cloud)
    ```
-5. **Click "Optimize LinkedIn Profile"**
+5. **Click "Edit Intro"**
 6. The extension will:
-   - Navigate to your profile edit page
-   - Update the headline with your text
-   - Display a success message
+   - Navigate through your profile
+   - Update the headline, industry... with the best optimized content
 
 ## 🏗️ Project Structure
 

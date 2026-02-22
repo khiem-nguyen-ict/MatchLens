@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
     "updateLinkedInProfile",
   );
   const linkedInMessage = document.getElementById("linkedInMessage");
-  const profileIdDisplay = document.getElementById("profileIdDisplay");
 
   var profile = null;
 
@@ -51,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (response && response.isLinkedInProfile) {
           updateLinkedInProfile.style.display = "block";
-          profileIdDisplay.textContent = response.profileId || "Unknown";
         } else {
           updateLinkedInProfile.style.display = "none";
           showMessage("This extension only works on LinkedIn profile pages. Please navigate to a LinkedIn profile to use the optimization features.");
@@ -65,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
-   * Optimize LinkedIn Profile
+   * Edit Intro
    */
   updateLinkedInProfile.addEventListener("click", async () => {
     if (!profile || !profile.headline || profile.headline.trim() === "") {
