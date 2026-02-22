@@ -51,7 +51,10 @@ chrome.runtime.onMessage.addListener((message) => {
       if (el.tagName === "SELECT") {
         [...el.options].forEach((option) => {
           if (option.text.toLowerCase().includes(value.toLowerCase())) {
-            el.value = option.value;
+            if (el.value !== option.value) {
+              el.value = option.value;
+              highlightElement(el);
+            }
           }
         });
       } else {

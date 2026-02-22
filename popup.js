@@ -1,16 +1,19 @@
 document.addEventListener("DOMContentLoaded", () => {
   const profileTextarea = document.getElementById("profile");
   const saveButton = document.getElementById("save");
-  const linkedInSection = document.getElementById("linkedInSection");
-  const updateLinkedInProfile = document.getElementById("updateLinkedInProfile");
+  const updateLinkedInProfile = document.getElementById(
+    "updateLinkedInProfile",
+  );
   const linkedInMessage = document.getElementById("linkedInMessage");
   const profileIdDisplay = document.getElementById("profileIdDisplay");
-  const headlineInput = document.getElementById("headlineInput");
+
+  var profile = null;
 
   // Load and display saved profile
   chrome.storage.local.get("profile", (data) => {
     if (data.profile) {
       profileTextarea.value = JSON.stringify(data.profile, null, 2); // pretty-print
+      profile = data.profile;
     }
   });
 
@@ -36,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (!tab.url.includes("linkedin.com")) {
-        linkedInSection.style.display = "none";
+        updateLinkedInProfile.style.display = "none";
         return;
       }
 
@@ -46,27 +49,19 @@ document.addEventListener("DOMContentLoaded", () => {
           type: "DETECT_LINKEDIN_PAGE",
         });
 
-        // Load saved profile info if available
-        chrome.storage.local.get("profile", (data) => {
-            console.log("Loaded profile from storage:", data.profile);
-          if (data.profile && data.profile.headline) {
-            headlineInput.value = data.profile.headline;
-          }
-        });
-
         if (response && response.isLinkedInProfile) {
-          linkedInSection.style.display = "block";
+          updateLinkedInProfile.style.display = "block";
           profileIdDisplay.textContent = response.profileId || "Unknown";
         } else {
-          linkedInSection.style.display = "none";
+          updateLinkedInProfile.style.display = "none";
         }
       } catch (error) {
         console.log("Content script not ready or page not a LinkedIn profile");
-        linkedInSection.style.display = "none";
+        updateLinkedInProfile.style.display = "none";
       }
     } catch (error) {
       console.error("Error checking LinkedIn page:", error);
-      linkedInSection.style.display = "none";
+      updateLinkedInProfile.style.display = "none";
     }
   }
 
@@ -74,10 +69,10 @@ document.addEventListener("DOMContentLoaded", () => {
    * Optimize LinkedIn Profile
    */
   updateLinkedInProfile.addEventListener("click", async () => {
-    const newHeadline = headlineInput.value.trim();
+    const newHeadline = profile?.headline;
 
-    if (!newHeadline) {
-      showMessage("Please enter a headline", "error");
+    if (!newHeadline || newHeadline.trim() === "") {
+      showMessage("Please enter a headline in your profile JSON", "error");
       return;
     }
 
