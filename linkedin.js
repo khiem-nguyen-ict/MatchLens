@@ -201,6 +201,9 @@ function updateTextInElement(element, newText) {
  * ✅ Uses async IIFE inside setInterval to properly await field updates.
  */
 function processLinkedInOptimization(config, isDirectUpdate = true) {
+
+    console.log(`Starting LinkedIn optimization for: ${config}, profileId: ${config.profileId}, direct update: ${isDirectUpdate}`,
+    );
   const profileId = extractProfileId() || config.profileId;
 
   if (!profileId) {
@@ -267,7 +270,7 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
             results[key] = result;
           } else {
             console.warn(
-              `Uppdate Field: ${isDirectUpdate ? "Direct" : "Post-navigation"}: No value for key: ${key}.`,
+              `Uppdate Field, Page =${config.page}: ${isDirectUpdate ? "Direct" : "Post-navigation"}: No value for key: ${key}.`,
             );
             results[key] = false;
           }

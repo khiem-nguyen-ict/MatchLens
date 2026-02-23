@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
    */
   async function optimizeLinkedInProfile(button, page) {
     var data = {};
-    LINKED_IN_FIELD_MAPPING[LinkedInPageType.EDIT_INTRO].forEach(({ key }) => {
+    LINKED_IN_FIELD_MAPPING[page].forEach(({ key }) => {
       if (!profile[key] || profile[key].trim() === "") {
         showMessage(
           `Please enter a valid value for ${key} in your profile JSON`,
