@@ -1,13 +1,6 @@
 // LinkedIn Profile Optimizer
 // Detects LinkedIn profile URLs and optimizes profile content
 
-const LinkedInPageType = {
-  PROFILE: "PROFILE",
-  EDIT_INTRO: "EDIT_INTRO",
-  EDIT_ABOUT: "EDIT_ABOUT",
-  OTHER: "OTHER",
-};
-
 /**
  * Extract profile ID from LinkedIn URL
  * Handles: https://www.linkedin.com/in/khiem-nguyen-ict/ -> khiem-nguyen-ict
@@ -53,28 +46,6 @@ function navigateToEditAbout(profileId) {
 function getEditor(selector) {
   return document.querySelector(selector);
 }
-
-const FIELD_MAPPING_DICTIONARY = {
-  headline: {
-    page: LinkedInPageType.EDIT_INTRO,
-    selector: 'div[contenteditable="true"][role="textbox"].tiptap.ProseMirror',
-  },
-  industry: {
-    page: LinkedInPageType.EDIT_INTRO,
-    selector:
-      '[data-view-name="top-card-edit-industry-single-line-text-input"]',
-  },
-  pronouns: {
-    page: LinkedInPageType.EDIT_INTRO,
-    selector:
-      'select[aria-label="Month"][data-view-name="top-card-edit-edit-pronoun-button"]',
-  },
-  about: {
-    page: LinkedInPageType.EDIT_ABOUT,
-    selector:
-      'textarea[data-view-name="form-add-summary-with-gai-multi-line-text-input"]',
-  },
-};
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -266,17 +237,12 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
     attempts++;
 
     const listOfEditors = {};
-    var expectedFieldsCount = Object.keys(FIELD_MAPPING_DICTIONARY).filter(
-      (key) => FIELD_MAPPING_DICTIONARY[key].page === config.page,
-    ).length;
+    var expectedFieldsCount = LINKED_IN_FIELD_MAPPING[config.page].length;
 
-    for (const key in FIELD_MAPPING_DICTIONARY) {
-      if (FIELD_MAPPING_DICTIONARY[key].page !== config.page) {
-        continue; // skip fields not relevant to the current page
-      }
-      const editor = getEditor(FIELD_MAPPING_DICTIONARY[key].selector);
+    for (const field of LINKED_IN_FIELD_MAPPING[config.page]) {
+      const editor = getEditor(field.selector);
       if (editor) {
-        listOfEditors[key] = editor;
+        listOfEditors[field.key] = editor;
       }
     }
 
@@ -293,14 +259,15 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
           const editor = listOfEditors[key];
           if (key && config[key]) {
             const result = await updateFieldValue(
-              FIELD_MAPPING_DICTIONARY[key].selector,
+              LINKED_IN_FIELD_MAPPING[config.page].find(f => f.key === key)?.selector,
+              //FIELD_MAPPING_DICTIONARY[key].selector,
               editor,
               config[key]
             );
             results[key] = result;
           } else {
             console.warn(
-              `Uppdate Field: ${isDirectUpdate ? "Direct" : "Post-navigation"}: No value for key: ${key}. Please check the code in popup.js to ensure the config is being passed correctly.`,
+              `Uppdate Field: ${isDirectUpdate ? "Direct" : "Post-navigation"}: No value for key: ${key}.`,
             );
             results[key] = false;
           }

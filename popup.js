@@ -71,33 +71,28 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
-   * Validates that required profile fields are present and non-empty.
+   * Sends an OPTIMIZE_LINKEDIN_PROFILE message to the active LinkedIn tab.
+   * Disables the button during processing and re-enables it after a delay.
    */
-  function validateProfileFields(fields) {
-    for (const [key, value] of Object.entries(fields)) {
-      if (!value || value.trim() === "") {
+  async function optimizeLinkedInProfile(button, page) {
+    var data = {};
+    LINKED_IN_FIELD_MAPPING[LinkedInPageType.EDIT_INTRO].forEach(({ key }) => {
+      if (!profile[key] || profile[key].trim() === "") {
         showMessage(
           `Please enter a valid value for ${key} in your profile JSON`,
           "error",
         );
-        return false;
+        throw new Error(
+          `Missing or empty field: ${key} in profile JSON. Check your input and try again.`,
+        );
+      } else {
+        data[key] = profile[key].trim();
       }
-    }
-    return true;
-  }
-
-  /**
-   * Sends an OPTIMIZE_LINKEDIN_PROFILE message to the active LinkedIn tab.
-   * Disables the button during processing and re-enables it after a delay.
-   */
-  async function optimizeLinkedInProfile(button, page, fields) {
-    if (!validateProfileFields(fields)) return;
+    });
 
     const config = {
       page,
-      ...Object.fromEntries(
-        Object.entries(fields).map(([k, v]) => [k, v?.trim()]),
-      ),
+      ...data,
     };
 
     try {
@@ -129,20 +124,14 @@ document.addEventListener("DOMContentLoaded", () => {
    * Edit Intro
    */
   editIntro.addEventListener("click", async () => {
-    await optimizeLinkedInProfile(this, "EDIT_INTRO", {
-      headline: profile.headline,
-      industry: profile.industry,
-      pronouns: profile.pronouns,
-    });
+    await optimizeLinkedInProfile(this, LinkedInPageType.EDIT_INTRO);
   });
 
   /**
    * Edit About
    */
   editAbout.addEventListener("click", async () => {
-    await optimizeLinkedInProfile(this, "EDIT_ABOUT", {
-      about: profile.about,
-    });
+    await optimizeLinkedInProfile(this, LinkedInPageType.EDIT_ABOUT);
   });
 
   /**
