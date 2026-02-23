@@ -24,17 +24,19 @@ Open the extension popup and paste your profile data in JSON, for example:
 
 ```json
 {
-    "firstName": "Khiem Thanh",
-    "lastName": "Nguyen",
-    "email": "khiem.nguyen@edu.turkuamk.fi",
-    "city": "Turku",
-    "country": "Finland",
-    "phone": "+35844[REDACTED]",
-    "company": "TMA Solutions",
-    "title": "Frontend Technical Lead",
-    "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland",
-    "industry": "Software Development"
-   }
+  "about": "I am a Senior Full-Stack Engineer with over 20 years of experience designing scalable web platforms and leading engineering teams across healthcare, AI, and enterprise systems.\n\nMy core strength is frontend architecture using React and TypeScript, combined with robust backend integrations in Java Spring and microservices environments. I focus on building clean, maintainable systems that translate complex business requirements into reliable technical solutions.\n\nThroughout my career, I have:\n• Led cross-border engineering teams\n• Designed cloud-native architectures (AWS & Azure)\n• Delivered production systems serving international clients\n• Bridged technical execution with business objectives\n\nI work comfortably across architecture, hands-on development, and technical leadership. My approach emphasizes clarity, scalability, and long-term maintainability over quick fixes.\n\nCurrently based in Finland and open to Senior Frontend, Full-Stack, or Technical Lead roles in product-driven companies.",
+  "city": "Turku",
+  "company": "TMA Solutions",
+  "country": "Finland",
+  "email": "khiem.nguyen@edu.turkuamk.fi",
+  "firstName": "Khiem Thanh",
+  "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland",
+  "industry": "Software Development",
+  "lastName": "Nguyen",
+  "phone": "+35844[REDACTED]",
+  "pronouns": "He/Him",
+  "title": "Frontend Technical Lead"
+}
 ```
 
 Click **Save** to store the profile locally.
