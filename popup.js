@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           linkedInSection.style.display = "none";
           showMessage(
-            "This extension only works on LinkedIn profile pages. Please navigate to a LinkedIn profile to use the optimization features.", "error",
+            "This extension only works on <a href='https://www.linkedin.com/in/' target='_blank'>LinkedIn Profile</a> page only.", "error",
           );
         }
       } catch (error) {
@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", () => {
    * Display message to user
    */
   function showMessage(text, type = "success") {
-    linkedInMessage.textContent = text;
+    linkedInMessage.innerHTML = text;
     linkedInMessage.style.display = "block";
     linkedInMessage.style.color = type === "error" ? "#e74c3c" : "#27ae60";
 
