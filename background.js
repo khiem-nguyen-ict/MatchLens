@@ -189,7 +189,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const updates = data.linkedInUpdates || [];
       updates.push({
         profileId: message.profileId,
-        newHeadline: message.newHeadline,
+        headline: message.headline,
         timestamp: message.timestamp,
       });
       if (updates.length > 20) updates.shift();

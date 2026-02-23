@@ -55,11 +55,11 @@ function getEditor(selector) {
 }
 
 const FIELD_MAPPING_DICTIONARY = {
-  newHeadline: {
+  headline: {
     page: LinkedInPageType.EDIT_INTRO,
     selector: 'div[contenteditable="true"][role="textbox"].tiptap.ProseMirror',
   },
-  newIndustry: {
+  industry: {
     page: LinkedInPageType.EDIT_INTRO,
     selector: '[data-testid="typeahead-input"]',
   },
@@ -288,8 +288,8 @@ function processLinkedInOptimization(config) {
           chrome.runtime.sendMessage({
             type: "LINKEDIN_HEADLINE_UPDATED",
             profileId,
-            newHeadline: config.newHeadline,
-            newIndustry: config.newIndustry,
+            headline: config.headline,
+            industry: config.industry,
             timestamp: new Date().toISOString(),
           });
         }

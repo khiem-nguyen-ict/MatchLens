@@ -58,7 +58,8 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
           linkedInSection.style.display = "none";
           showMessage(
-            "This extension only works on <a href='https://www.linkedin.com/in/' target='_blank'>LinkedIn Profile</a> page only.", "error",
+            "This extension only works on <a href='https://www.linkedin.com/in/' target='_blank'>LinkedIn Profile</a> page only.",
+            "error",
           );
         }
       } catch (error) {
@@ -70,85 +71,90 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
-   * Edit Intro
+   * Validates that required profile fields are present and non-empty.
+   * @param {Object} fields - { fieldName: displayName }
+   * @returns {boolean} true if all fields are valid
    */
-  editIntro.addEventListener("click", async () => {
-    if (!profile || !profile.headline || profile.headline.trim() === "") {
-      showMessage("Please enter a headline in your profile JSON", "error");
-      return;
+  function validateProfileFields(fields) {
+    for (const [key, label] of Object.entries(fields)) {
+      if (!profile || !profile[key] || profile[key].trim() === "") {
+        showMessage(`Please enter a ${label} in your profile JSON`, "error");
+        return false;
+      }
     }
-    if (!profile.industry || profile.industry.trim() === "") {
-      showMessage("Please enter an industry in your profile JSON", "error");
-      return;
-    }
+    return true;
+  }
 
+  /**
+   * Sends an OPTIMIZE_LINKEDIN_PROFILE message to the active LinkedIn tab.
+   * Disables the button during processing and re-enables it after a delay.
+   * @param {HTMLElement} button - The button to disable during processing
+   * @param {Object} config - The config payload for the content script
+   * @param {string} errorContext - Label used in the error message (e.g. "intro")
+   */
+  async function optimizeLinkedInProfile(button, config, errorContext) {
     try {
       const tab = await getActiveLinkedInTabOrHide();
       if (!tab) return;
 
-      editIntro.disabled = true;
+      button.disabled = true;
 
-      // Send optimization message to content script
-      const response = await chrome.tabs.sendMessage(tab.id, {
+      await chrome.tabs.sendMessage(tab.id, {
         type: "OPTIMIZE_LINKEDIN_PROFILE",
-        config: {
-          page: "EDIT_INTRO",
-          newHeadline: profile.headline.trim(),
-          newIndustry: profile.industry.trim(),
-        },
+        config,
       });
 
       showMessage("Processing...", "success");
 
-      // Re-enable button after 2 seconds
       setTimeout(() => {
-        editIntro.disabled = false;
+        button.disabled = false;
       }, 2000);
     } catch (error) {
       showMessage(
-        `Failed to update intro. Please try again. Error: ${error.message}`,
+        `Failed to update ${errorContext}. Please try again. Error: ${error.message}`,
         "error",
       );
-      editIntro.disabled = false;
+      button.disabled = false;
     }
+  }
+
+  /**
+   * Edit Intro
+   */
+  editIntro.addEventListener("click", async () => {
+    if (
+      !validateProfileFields({
+        headline: "headline",
+        industry: "industry",
+      })
+    )
+      return;
+
+    await optimizeLinkedInProfile(
+      editIntro,
+      {
+        page: "EDIT_INTRO",
+        headline: profile.headline.trim(),
+        industry: profile.industry.trim(),
+      },
+      "intro",
+    );
   });
 
   /**
    * Edit About
    */
   editAbout.addEventListener("click", async () => {
-    if (!profile || !profile.about || profile.about.trim() === "") {
-      showMessage("Please enter an about in your profile JSON", "error");
-      return;
-    }
-    try {
-      const tab = await getActiveLinkedInTabOrHide();
-      if (!tab) return;
+    if (!validateProfileFields({ about: "about" })) return;
 
-      editAbout.disabled = true;
-
-      // Send optimization message to content script
-      const response = await chrome.tabs.sendMessage(tab.id, {
-        type: "OPTIMIZE_LINKEDIN_PROFILE",
-        config: {
-          page: "EDIT_ABOUT",
-          newAbout: profile.about.trim(),
-        },
-      });
-
-      showMessage("Processing...", "success");
-
-      // Re-enable button after 2 seconds
-      setTimeout(() => {
-        editAbout.disabled = false;
-      }, 2000);
-    } catch (error) {
-      showMessage(
-        `Failed to update about. Please try again. Error: ${error.message}`,
-        "error",
-      );
-      editAbout.disabled = false;
-    }
+    await optimizeLinkedInProfile(
+      editAbout,
+      {
+        page: "EDIT_ABOUT",
+        newAbout: profile.about.trim(),
+      },
+      "about",
+    );
   });
 
   /**
