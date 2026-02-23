@@ -61,9 +61,9 @@ const FIELD_MAPPING_DICTIONARY = {
   },
   industry: {
     page: LinkedInPageType.EDIT_INTRO,
-    selector: '[data-testid="typeahead-input"]',
+    selector: '[data-view-name="top-card-edit-industry-single-line-text-input"]',
   },
-  newAbout: {
+  about: {
     page: LinkedInPageType.EDIT_ABOUT,
     selector:
       'textarea[data-view-name="form-add-summary-with-gai-multi-line-text-input"]',
@@ -79,38 +79,18 @@ function sleep(ms) {
  * Uses script injection to access React internals from the page world,
  * bypassing Chrome extension's isolated world restriction.
  */
-async function updateLinkedInTypeahead(input, newValue) {
-  const selector = input.getAttribute("data-testid")
-    ? `[data-testid="${input.getAttribute("data-testid")}"]`
-    : input.id
-      ? `#${input.id}`
-      : '[data-testid="typeahead-input"]';
-
-  const callbackId = `__linkedIn_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
+async function updateLinkedInTypeahead(selector, newValue) {
   return new Promise((resolve) => {
     const timeout = setTimeout(() => {
       resolve(false);
     }, 10000);
-
-    // Listen for result dispatched back from page world
-    window.addEventListener(
-      callbackId,
-      (e) => {
-        clearTimeout(timeout);
-        const result = e.detail;
-        resolve(result.success);
-      },
-      { once: true },
-    );
-
+  
     // Ask background script to do the executeScript (only background can do this)
     chrome.runtime.sendMessage(
       {
         type: "INJECT_TYPEAHEAD_SCRIPT",
         selector,
         newValue,
-        callbackId,
       },
       (_response) => {
         if (chrome.runtime.lastError) {
@@ -163,7 +143,7 @@ function isTypeaheadInput(input) {
  * Supports: contenteditable elements and typeahead/search inputs.
  * Async to properly await typeahead completion.
  */
-async function updateFieldValue(editor, newValue) {
+async function updateFieldValue(selector, editor, newValue) {
   try {
     if (!editor) {
       return false;
@@ -173,7 +153,7 @@ async function updateFieldValue(editor, newValue) {
       updateTextInElement(editor, newValue);
     } else if (editor.tagName === "INPUT") {
       if (isTypeaheadInput(editor)) {
-        await updateLinkedInTypeahead(editor, newValue);
+        await updateLinkedInTypeahead(selector, newValue);
       } else {
         editor.value = newValue;
         editor.dispatchEvent(new Event("input", { bubbles: true }));
@@ -276,7 +256,7 @@ function processLinkedInOptimization(config) {
         for (const key in listOfEditors) {
           const editor = listOfEditors[key];
           if (key && config[key]) {
-            const result = await updateFieldValue(editor, config[key]);
+            const result = await updateFieldValue(FIELD_MAPPING_DICTIONARY[key].selector, editor, config[key]);
             results[key] = result;
           }
         }
@@ -302,21 +282,21 @@ function processLinkedInOptimization(config) {
 
 // Listen for messages from popup or background
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "OPTIMIZE_LINKEDIN_PROFILE") {
-    processLinkedInOptimization(message.config);
-    sendResponse({ status: "Processing optimization" });
-  }
-
-  if (message.type === "GET_PROFILE_ID") {
-    const profileId = extractProfileId();
-    sendResponse({ profileId, isProfilePage: isLinkedInProfilePage() });
-  }
-
-  if (message.type === "DETECT_LINKEDIN_PAGE") {
-    sendResponse({
-      isLinkedInProfile: isLinkedInProfilePage(),
-      profileId: extractProfileId(),
-    });
+  switch (message.type) {
+    case "OPTIMIZE_LINKEDIN_PROFILE":
+      processLinkedInOptimization(message.config);
+      sendResponse({ status: "Processing optimization" });
+      break;
+    case "GET_PROFILE_ID":
+      const profileId = extractProfileId();
+      sendResponse({ profileId, isProfilePage: isLinkedInProfilePage() });
+      break;
+    case "DETECT_LINKEDIN_PAGE":
+      sendResponse({
+        isLinkedInProfile: isLinkedInProfilePage(),
+        profileId: extractProfileId(),
+      });
+      break;
   }
 });
 

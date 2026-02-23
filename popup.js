@@ -151,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
       editAbout,
       {
         page: "EDIT_ABOUT",
-        newAbout: profile.about.trim(),
+        about: profile.about.trim(),
       },
       "about",
     );

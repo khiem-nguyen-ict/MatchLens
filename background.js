@@ -1,143 +1,84 @@
 // ✅ This function runs in PAGE world - must be fully self-contained
-function typeaheadPageWorldLogic(selector, newValue, callbackId) {
-  (async () => {
-    function sleep(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
+function typeaheadPageWorldLogic(selector, newValue) {
+  return new Promise((resolve, reject) => {
+    const input = document.querySelector(selector);
+    const nativeSetter = Object.getOwnPropertyDescriptor(
+      HTMLInputElement.prototype,
+      "value",
+    ).set;
+
+    // Step 1: Set the search text and trigger input event so LinkedIn fetches matching results
+    nativeSetter.call(input, newValue);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    // Step 2: Open dropdown via React fiber
+    const fiberKey = Object.keys(input).find((k) =>
+      k.startsWith("__reactFiber"),
+    );
+    let current = input[fiberKey];
+    while (current) {
+      const props = current.memoizedProps;
+      if (props?.onFocus)
+        props.onFocus({ target: input, currentTarget: input, bubbles: true });
+      if (props?.onClick)
+        props.onClick({ target: input, currentTarget: input, bubbles: true });
+      if (props?.onChange)
+        props.onChange({ target: input, currentTarget: input, bubbles: true });
+      current = current.return;
     }
 
-    try {
-      const input = document.querySelector(selector);
-      if (!input) throw new Error("Input not found: " + selector);
+    // Step 3: Poll until the matching option appears
+    const maxAttempts = 20;
+    let attempts = 0;
 
-      const reactPropsKey = Object.keys(input).find((k) =>
-        k.startsWith("__reactProps"),
+    const interval = setInterval(() => {
+      attempts++;
+      const options = document.querySelectorAll('[role="option"]');
+      const target = Array.from(options).find((o) =>
+        o.textContent.toLowerCase().includes(newValue.toLowerCase()),
       );
-      if (!reactPropsKey)
-        throw new Error(
-          "React props not found. Keys: " +
-            Object.keys(input)
-              .filter((k) => k.startsWith("__"))
-              .join(", "),
+
+      if (target) {
+        clearInterval(interval);
+        console.log("Selecting:", target.textContent.trim());
+
+        target.click();
+        const fiberKey = Object.keys(target).find((k) =>
+          k.startsWith("__reactFiber"),
         );
-
-      const reactProps = input[reactPropsKey];
-
-
-      input.focus();
-      await sleep(300);
-
-      input.dispatchEvent(
-        new KeyboardEvent("keydown", {
-          key: "a",
-          ctrlKey: true,
-          bubbles: true,
-        }),
-      );
-      await sleep(100);
-
-      const nativeSetter = Object.getOwnPropertyDescriptor(
-        HTMLInputElement.prototype,
-        "value",
-      ).set;
-
-      nativeSetter.call(input, "");
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      await sleep(200);
-
-
-      nativeSetter.call(input, newValue);
-
-      if (reactProps.onChange) {
-        reactProps.onChange({
-          target: input,
-          currentTarget: input,
-          bubbles: true,
-          type: "change",
-          nativeEvent: new Event("change"),
-        });
-      }
-
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-      await sleep(200);
-
-      if (reactProps.onInput) {
-        reactProps.onInput({ target: input, bubbles: true });
-      }
-
-      await sleep(1500);
-
-      const dropdownSelectors = [
-        '[role="option"]',
-        '[role="listbox"] li',
-        '[role="listbox"] [role="option"]',
-        ".basic-typeahead__selectable",
-        '[data-view-name*="typeahead"] li',
-        'li[id*="option"]',
-        "[aria-selected]",
-      ];
-
-      let found = false;
-      for (const sel of dropdownSelectors) {
-        const items = document.querySelectorAll(sel);
-        if (items.length > 0) {
-          let target = Array.from(items).find((el) =>
-            el.textContent
-              .trim()
-              .toLowerCase()
-              .includes(newValue.toLowerCase()),
-          );
-          if (!target) target = items[0];
-
-          target.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
-          target.click();
-          target.dispatchEvent(new MouseEvent("mouseup", { bubbles: true }));
-          found = true;
-
-          window.dispatchEvent(
-            new CustomEvent(callbackId, {
-              detail: {
-                success: true,
-                result: "Clicked: " + target.textContent.trim(),
-              },
-            }),
-          );
-          break;
+        let current = target[fiberKey];
+        while (current) {
+          const props = current.memoizedProps;
+          if (props?.onClick)
+            props.onClick({
+              target,
+              currentTarget: target,
+              bubbles: true,
+              preventDefault: () => {},
+            });
+          if (props?.onMouseDown)
+            props.onMouseDown({
+              target,
+              currentTarget: target,
+              bubbles: true,
+              preventDefault: () => {},
+            });
+          current = current.return;
         }
-      }
 
-      if (!found) {
-        console.warn("[PageWorld] No dropdown, using ArrowDown+Enter fallback");
-        input.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            key: "ArrowDown",
-            keyCode: 40,
-            bubbles: true,
-          }),
+        resolve();
+      } else if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        console.warn(
+          "Option not found. Available:",
+          Array.from(document.querySelectorAll('[role="option"]')).map((o) =>
+            o.textContent.trim(),
+          ),
         );
-        await sleep(300);
-        input.dispatchEvent(
-          new KeyboardEvent("keydown", {
-            key: "Enter",
-            keyCode: 13,
-            bubbles: true,
-          }),
-        );
-        window.dispatchEvent(
-          new CustomEvent(callbackId, {
-            detail: { success: true, result: "fallback-enter" },
-          }),
-        );
+        reject(new Error(`Option "${newValue}" not found`));
       }
-    } catch (err) {
-      console.error("[PageWorld] Error:", err.message);
-      window.dispatchEvent(
-        new CustomEvent(callbackId, {
-          detail: { success: false, error: err.message },
-        }),
-      );
-    }
-  })();
+    }, 300);
+  });
 }
 
 // ✅ Single unified message listener - handles ALL message types
@@ -184,7 +125,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // ---- LinkedIn headline updated ----
   if (message.type === "LINKEDIN_HEADLINE_UPDATED") {
-    
     chrome.storage.local.get("linkedInUpdates", (data) => {
       const updates = data.linkedInUpdates || [];
       updates.push({
@@ -201,12 +141,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   // ---- Inject typeahead script into page world ----
   if (message.type === "INJECT_TYPEAHEAD_SCRIPT") {
+    console.log("Background: Injecting typeahead script with:", message);
     chrome.scripting
       .executeScript({
         target: { tabId: sender.tab.id },
-        world: "MAIN", // ✅ page world - can access React internals
+        world: "MAIN", // page world - can access React internals
         func: typeaheadPageWorldLogic,
-        args: [message.selector, message.newValue, message.callbackId],
+        args: [message.selector, message.newValue],
       })
       .then(() => {
         sendResponse({ status: "injected" });
