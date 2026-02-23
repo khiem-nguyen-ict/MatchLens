@@ -61,7 +61,13 @@ const FIELD_MAPPING_DICTIONARY = {
   },
   industry: {
     page: LinkedInPageType.EDIT_INTRO,
-    selector: '[data-view-name="top-card-edit-industry-single-line-text-input"]',
+    selector:
+      '[data-view-name="top-card-edit-industry-single-line-text-input"]',
+  },
+  pronouns: {
+    page: LinkedInPageType.EDIT_INTRO,
+    selector:
+      'select[aria-label="Month"][data-view-name="top-card-edit-edit-pronoun-button"]',
   },
   about: {
     page: LinkedInPageType.EDIT_ABOUT,
@@ -84,7 +90,7 @@ async function updateLinkedInTypeahead(selector, newValue) {
     const timeout = setTimeout(() => {
       resolve(false);
     }, 10000);
-  
+
     // Ask background script to do the executeScript (only background can do this)
     chrome.runtime.sendMessage(
       {
@@ -138,6 +144,31 @@ function isTypeaheadInput(input) {
   return false;
 }
 
+async function updateSelectValue(select, newValue) {
+  if (!select) {
+    console.error("Select element not found");
+    return false;
+  }
+
+  const options = Array.from(select.options);
+  const match = options.find(
+    (opt) => opt.text.trim().toLowerCase() === newValue.trim().toLowerCase(),
+  );
+
+  if (!match) {
+    console.error(`No option found with text: "${newValue}"`);
+    return false;
+  }
+
+  select.value = match.value;
+
+  // Trigger change events so frameworks (React, etc.) detect the update
+  select.dispatchEvent(new Event("input", { bubbles: true }));
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+
+  return true;
+}
+
 /**
  * Helper function to update a field with new text.
  * Supports: contenteditable elements and typeahead/search inputs.
@@ -151,24 +182,27 @@ async function updateFieldValue(selector, editor, newValue) {
 
     if (editor.contentEditable === "true") {
       updateTextInElement(editor, newValue);
-    } else if (editor.tagName === "INPUT") {
-      if (isTypeaheadInput(editor)) {
-        await updateLinkedInTypeahead(selector, newValue);
-      } else {
-        editor.value = newValue;
-        editor.dispatchEvent(new Event("input", { bubbles: true }));
-        editor.dispatchEvent(new Event("change", { bubbles: true }));
+    } else {
+      switch (editor.tagName) {
+        case "INPUT":
+          if (isTypeaheadInput(editor)) {
+            await updateLinkedInTypeahead(selector, newValue);
+          } else {
+            editor.value = newValue;
+            editor.dispatchEvent(new Event("input", { bubbles: true }));
+            editor.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+          break;
+        case "TEXTAREA":
+          editor.value = newValue;
+          editor.dispatchEvent(new Event("input", { bubbles: true }));
+          editor.dispatchEvent(new Event("change", { bubbles: true }));
+          break;
+        case "SELECT":
+          await updateSelectValue(editor, newValue);
+          break;
       }
-    } else if (editor.tagName === "TEXTAREA") {
-      console.warn(
-        "⚠️ Detected textarea - using direct value update which may not trigger React updates. Selector:",
-        editor,
-      );
-      editor.value = newValue;
-      editor.dispatchEvent(new Event("input", { bubbles: true }));
-      editor.dispatchEvent(new Event("change", { bubbles: true }));
     }
-
     highlightElement(editor);
     return true;
   } catch (error) {
@@ -195,7 +229,7 @@ function updateTextInElement(element, newText) {
  * Main function to process LinkedIn profile optimization.
  * ✅ Uses async IIFE inside setInterval to properly await field updates.
  */
-function processLinkedInOptimization(config) {
+function processLinkedInOptimization(config, isDirectUpdate = true) {
   const profileId = extractProfileId() || config.profileId;
 
   if (!profileId) {
@@ -246,6 +280,8 @@ function processLinkedInOptimization(config) {
       }
     }
 
+    console.log(`Update ${Object.keys(listOfEditors).join(", ")}`);
+
     if (Object.keys(listOfEditors).length >= expectedFieldsCount) {
       clearInterval(waitForEditor);
 
@@ -256,22 +292,18 @@ function processLinkedInOptimization(config) {
         for (const key in listOfEditors) {
           const editor = listOfEditors[key];
           if (key && config[key]) {
-            const result = await updateFieldValue(FIELD_MAPPING_DICTIONARY[key].selector, editor, config[key]);
+            const result = await updateFieldValue(
+              FIELD_MAPPING_DICTIONARY[key].selector,
+              editor,
+              config[key]
+            );
             results[key] = result;
+          } else {
+            console.warn(
+              `Uppdate Field: ${isDirectUpdate ? "Direct" : "Post-navigation"}: No value for key: ${key}. Please check the code in popup.js to ensure the config is being passed correctly.`,
+            );
+            results[key] = false;
           }
-        }
-
-        const anySuccess = Object.values(results).some(Boolean);
-
-        // Notify background if at least one field succeeded
-        if (anySuccess) {
-          chrome.runtime.sendMessage({
-            type: "LINKEDIN_HEADLINE_UPDATED",
-            profileId,
-            headline: config.headline,
-            industry: config.industry,
-            timestamp: new Date().toISOString(),
-          });
         }
       })();
     } else if (attempts >= maxAttempts) {
@@ -284,7 +316,7 @@ function processLinkedInOptimization(config) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case "OPTIMIZE_LINKEDIN_PROFILE":
-      processLinkedInOptimization(message.config);
+      processLinkedInOptimization(message.config, true);
       sendResponse({ status: "Processing optimization" });
       break;
     case "GET_PROFILE_ID":
@@ -312,7 +344,7 @@ window.addEventListener("load", () => {
         (isEditAboutPage() && update.page === LinkedInPageType.EDIT_ABOUT)
       ) {
         setTimeout(() => {
-          processLinkedInOptimization(update);
+          processLinkedInOptimization(update, false);
           chrome.storage.local.remove("linkedInDataUpdate");
         }, 2500);
       }

@@ -123,22 +123,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
 
-  // ---- LinkedIn headline updated ----
-  if (message.type === "LINKEDIN_HEADLINE_UPDATED") {
-    chrome.storage.local.get("linkedInUpdates", (data) => {
-      const updates = data.linkedInUpdates || [];
-      updates.push({
-        profileId: message.profileId,
-        headline: message.headline,
-        timestamp: message.timestamp,
-      });
-      if (updates.length > 20) updates.shift();
-      chrome.storage.local.set({ linkedInUpdates: updates });
-    });
-
-    return false;
-  }
-
   // ---- Inject typeahead script into page world ----
   if (message.type === "INJECT_TYPEAHEAD_SCRIPT") {
     console.log("Background: Injecting typeahead script with:", message);

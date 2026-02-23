@@ -72,13 +72,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * Validates that required profile fields are present and non-empty.
-   * @param {Object} fields - { fieldName: displayName }
-   * @returns {boolean} true if all fields are valid
    */
   function validateProfileFields(fields) {
-    for (const [key, label] of Object.entries(fields)) {
-      if (!profile || !profile[key] || profile[key].trim() === "") {
-        showMessage(`Please enter a ${label} in your profile JSON`, "error");
+    for (const [key, value] of Object.entries(fields)) {
+      if (!value || value.trim() === "") {
+        showMessage(
+          `Please enter a valid value for ${key} in your profile JSON`,
+          "error",
+        );
         return false;
       }
     }
@@ -88,11 +89,17 @@ document.addEventListener("DOMContentLoaded", () => {
   /**
    * Sends an OPTIMIZE_LINKEDIN_PROFILE message to the active LinkedIn tab.
    * Disables the button during processing and re-enables it after a delay.
-   * @param {HTMLElement} button - The button to disable during processing
-   * @param {Object} config - The config payload for the content script
-   * @param {string} errorContext - Label used in the error message (e.g. "intro")
    */
-  async function optimizeLinkedInProfile(button, config, errorContext) {
+  async function optimizeLinkedInProfile(button, page, fields) {
+    if (!validateProfileFields(fields)) return;
+
+    const config = {
+      page,
+      ...Object.fromEntries(
+        Object.entries(fields).map(([k, v]) => [k, v?.trim()]),
+      ),
+    };
+
     try {
       const tab = await getActiveLinkedInTabOrHide();
       if (!tab) return;
@@ -122,39 +129,20 @@ document.addEventListener("DOMContentLoaded", () => {
    * Edit Intro
    */
   editIntro.addEventListener("click", async () => {
-    if (
-      !validateProfileFields({
-        headline: "headline",
-        industry: "industry",
-      })
-    )
-      return;
-
-    await optimizeLinkedInProfile(
-      editIntro,
-      {
-        page: "EDIT_INTRO",
-        headline: profile.headline.trim(),
-        industry: profile.industry.trim(),
-      },
-      "intro",
-    );
+    await optimizeLinkedInProfile(this, "EDIT_INTRO", {
+      headline: profile.headline,
+      industry: profile.industry,
+      pronouns: profile.pronouns,
+    });
   });
 
   /**
    * Edit About
    */
   editAbout.addEventListener("click", async () => {
-    if (!validateProfileFields({ about: "about" })) return;
-
-    await optimizeLinkedInProfile(
-      editAbout,
-      {
-        page: "EDIT_ABOUT",
-        about: profile.about.trim(),
-      },
-      "about",
-    );
+    await optimizeLinkedInProfile(this, "EDIT_ABOUT", {
+      about: profile.about,
+    });
   });
 
   /**
@@ -168,7 +156,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Auto-hide after 3 seconds
     setTimeout(() => {
       linkedInMessage.style.display = "none";
-    }, 5000);
+    }, 3000);
   }
 
   // Check LinkedIn page on popup open
