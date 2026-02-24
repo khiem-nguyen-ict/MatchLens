@@ -51,6 +51,17 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function getLanguageList() {
+  // Find by aria-current="true" button's parent nav, then get all sibling buttons
+  const activeBtn = document.querySelector('button[aria-current="true"]');
+  const nav = activeBtn?.closest("nav");
+  const buttons = nav?.querySelectorAll("button");
+  const languages = [...(buttons || [])]
+    .map((btn) => btn.innerText.trim())
+    .filter(Boolean);
+  return languages;
+}
+
 /**
  * Update a typeahead/autocomplete input on LinkedIn.
  * Uses script injection to access React internals from the page world,
@@ -254,6 +265,8 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
     if (Object.keys(listOfEditors).length >= expectedFieldsCount) {
       clearInterval(waitForEditor);
 
+      let languageWarning = getLanguageList().join(", ");
+
       // Async IIFE — sequentially awaits each field update
       (async () => {
         const results = {};
@@ -291,6 +304,12 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
             isDone,
             timeout: isDone ? 3000 : 15000,
           });
+
+          if (isDone && languageWarning.length > 0) {
+            alert(
+              `Please double-check the following language(s) on your profile: ${languageWarning}. LinkedIn may not allow automatic updates for certain fields when multiple languages are present. If you notice any fields that were not updated, please update them manually. We apologize for the inconvenience.`,
+            );
+          }
         }
       })();
     } else if (attempts >= maxAttempts) {
