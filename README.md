@@ -62,14 +62,14 @@ MatchLens/
 ├── popup.js           # Popup logic and user interactions
 ├── background.js      # Service worker (injects page-world scripts for typeahead)
 ├── linkedin.js        # LinkedIn profile editing logic
-├── content.js         # Form detection and filling logic
+├── content.js         # (Unused, reserved for future LinkedIn-specific scripts)
 ├── utils.js           # Shared helper functions
 └── icons/             # Icons used by the extension
 ```
 
 ## Technical Notes
 
-- `content.js` scans the DOM for form elements and sends `FORM_DETECTED` messages to the extension.
+
 - `popup.js` stores user profile JSON in Chrome local storage and sends `OPTIMIZE_LINKEDIN_PROFILE` messages to the content script when updating LinkedIn fields.
 - `linkedin.js` updates `contenteditable` headline fields and coordinates typeahead updates (it may call into `background.js` to inject a small script into the page world so React internals receive native events).
 - `background.js` contains the page-world script used to set native input values and trigger React `onChange` handlers safely.
