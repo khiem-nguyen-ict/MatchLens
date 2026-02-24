@@ -201,9 +201,9 @@ function updateTextInElement(element, newText) {
  * ✅ Uses async IIFE inside setInterval to properly await field updates.
  */
 function processLinkedInOptimization(config, isDirectUpdate = true) {
-
-    console.log(`Starting LinkedIn optimization for: ${config}, profileId: ${config.profileId}, direct update: ${isDirectUpdate}`,
-    );
+  console.log(
+    `Starting LinkedIn optimization profileId: ${config.profileId}, direct update: ${isDirectUpdate}`,
+  );
   const profileId = extractProfileId() || config.profileId;
 
   if (!profileId) {
@@ -249,7 +249,7 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
       }
     }
 
-    console.log(`Update ${Object.keys(listOfEditors).join(", ")}`);
+    console.log(`Update the list of ${Object.keys(listOfEditors).join(", ")}`);
 
     if (Object.keys(listOfEditors).length >= expectedFieldsCount) {
       clearInterval(waitForEditor);
@@ -260,20 +260,37 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
 
         for (const key in listOfEditors) {
           const editor = listOfEditors[key];
+          let msg = `Updating ${key}...`;
+          let isError = false;
           if (key && config[key]) {
             const result = await updateFieldValue(
-              LINKED_IN_FIELD_MAPPING[config.page].find(f => f.key === key)?.selector,
-              //FIELD_MAPPING_DICTIONARY[key].selector,
+              LINKED_IN_FIELD_MAPPING[config.page].find((f) => f.key === key)
+                ?.selector,
               editor,
-              config[key]
+              config[key],
             );
             results[key] = result;
+            isError = !result;
+            msg += result ? "Success" : "Failed";
+            console.log(msg);
           } else {
             console.warn(
               `Uppdate Field, Page =${config.page}: ${isDirectUpdate ? "Direct" : "Post-navigation"}: No value for key: ${key}.`,
             );
             results[key] = false;
+            isError = true;
+            msg += "No value provided";
           }
+          let isDone = Object.keys(results).length >= expectedFieldsCount;
+          // Relay progress status to popup via runtime.sendMessage
+          chrome.runtime.sendMessage({
+            type: "PROGRESS_STATUS",
+            status: `${msg}`,
+            buttonId: config.buttonId,
+            isError,
+            isDone,
+            timeout: isDone ? 3000 : 15000,
+          });
         }
       })();
     } else if (attempts >= maxAttempts) {
@@ -286,8 +303,13 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case "OPTIMIZE_LINKEDIN_PROFILE":
-      processLinkedInOptimization(message.config, true);
-      sendResponse({ status: "Processing optimization" });
+      if (message.config) {
+        if (!message.config.profileId) {
+          message.config.profileId = extractProfileId();
+        }
+        processLinkedInOptimization(message.config, true);
+        sendResponse({ status: "Processing optimization" });
+      }
       break;
     case "GET_PROFILE_ID":
       const profileId = extractProfileId();

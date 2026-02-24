@@ -92,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const config = {
       page,
+      buttonId: button.id,
       ...data,
     };
 
@@ -106,17 +107,19 @@ document.addEventListener("DOMContentLoaded", () => {
         config,
       });
 
-      showMessage("Processing...", "success");
+      let maxWaitingTime = 10000 * LINKED_IN_FIELD_MAPPING[page].length; // Max waiting time based on number of fields
+
+      showMessage("Processing...", "success", maxWaitingTime);
 
       setTimeout(() => {
-        button.disabled = false;
-      }, 2000);
+       button.disabled = false;
+      }, maxWaitingTime);
     } catch (error) {
       showMessage(
         `Failed to update ${errorContext}. Please try again. Error: ${error.message}`,
         "error",
       );
-      button.disabled = false;
+     button.disabled = false;
     }
   }
 
@@ -124,29 +127,60 @@ document.addEventListener("DOMContentLoaded", () => {
    * Edit Intro
    */
   editIntro.addEventListener("click", async () => {
-    await optimizeLinkedInProfile(this, LinkedInPageType.EDIT_INTRO);
+    await optimizeLinkedInProfile(editIntro, LinkedInPageType.EDIT_INTRO);
   });
 
   /**
    * Edit About
    */
   editAbout.addEventListener("click", async () => {
-    await optimizeLinkedInProfile(this, LinkedInPageType.EDIT_ABOUT);
+    await optimizeLinkedInProfile(editAbout, LinkedInPageType.EDIT_ABOUT);
   });
+
+  var lastTimer = null;
 
   /**
    * Display message to user
    */
-  function showMessage(text, type = "success") {
+  function showMessage(text, type = "success", timeout = 3000) {
+    // Auto-hide after 3 seconds
+    if (lastTimer) {
+      clearTimeout(lastTimer);
+      lastTimer = null;
+    }
+
     linkedInMessage.innerHTML = text;
     linkedInMessage.style.display = "block";
     linkedInMessage.style.color = type === "error" ? "#e74c3c" : "#27ae60";
 
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
+    lastTimer = setTimeout(() => {
       linkedInMessage.style.display = "none";
-    }, 3000);
+      lastTimer = null;
+    }, timeout);
   }
+
+  // Listen for progress status messages from background/content scripts
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    switch (message.type) {
+      case "PROGRESS_STATUS":
+        if (message.status) {
+          showMessage(
+            message.status,
+            message.isError ? "error" : "success",
+            message.timeout || 3000,
+          );
+        }
+        if (message.buttonId && message.isDone) {
+          const button = document.getElementById(message.buttonId);
+          if (button) {
+           button.disabled = false;
+          }
+        }
+        sendResponse && sendResponse({ received: true });
+        break;
+      // ...existing message types can be added here...
+    }
+  });
 
   // Check LinkedIn page on popup open
   checkLinkedInPage();
