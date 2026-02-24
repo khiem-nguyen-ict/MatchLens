@@ -1,11 +1,9 @@
 # MatchLens
 
-MatchLens is a Chrome extension that detects and fills web forms and provides LinkedIn profile editing helpers (headline, industry, about).
+MatchLens is a Chrome extension that help manage and optimize the LinkedIn profile.
 
 ## Key Features
 
-- Auto-detects form fields (`input`, `textarea`, `select`) and reports them to the popup UI
-- Auto-fills form fields using a JSON profile stored in Chrome local storage
 - LinkedIn optimization: updates Headline, Industry, and About on LinkedIn edit pages
 - Handles LinkedIn typeahead/autocomplete fields by injecting a small page-world script (via the background service worker)
 - Highlights fields that were modified for visual feedback
@@ -79,11 +77,6 @@ MatchLens/
 - `storage` — store profile data locally
 - `activeTab`, `tabs` — query and target the active tab
 - `scripting` — inject scripts into pages when needed
-
-## Troubleshooting
-
-- If the LinkedIn section does not appear in the popup: make sure the active tab URL contains `/in/` and reload the page and extension.
-- If a field appears updated in the UI but does not persist after Save, the extension will retry using a page-world injection to trigger React handlers; reload the page if needed.
 
 ## License
 
