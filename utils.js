@@ -27,9 +27,21 @@ const LinkedInPageType = {
 const LINKED_IN_FIELD_MAPPING = {
   [LinkedInPageType.EDIT_INTRO]: [
     {
+        key: "firstName",
+        selector: '[data-view-name="top-card-edit-first-name-single-line-text-input"]',
+    },
+    {
+        key: "lastName",
+        selector: '[data-view-name="top-card-edit-last-name-single-line-text-input"]',
+    },
+    {
       key: "headline",
       selector:
         'div[contenteditable="true"][role="textbox"].tiptap.ProseMirror',
+    },
+    {
+        key: "additionalName",
+        selector: '[data-view-name="top-card-edit-add-former-name-single-line-text-input"]',
     },
     {
       key: "industry",
