@@ -4,7 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const editIntro = document.getElementById("editIntro");
   const editAbout = document.getElementById("editAbout");
   const linkedInSection = document.getElementById("linkedInSection");
+  const linkedInUtils = document.getElementById("linkedInUtils");
   const linkedInMessage = document.getElementById("linkedInMessage");
+  const findJobsButton = document.getElementById("findJobs");
 
   var profile = null;
 
@@ -48,25 +50,17 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!tab) return;
 
       // Send message to content script to detect if it's a LinkedIn profile page
-      try {
-        const response = await chrome.tabs.sendMessage(tab.id, {
-          type: "DETECT_LINKEDIN_PAGE",
-        });
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        type: "DETECT_LINKEDIN_PAGE",
+      });
 
-        if (response && response.isLinkedInProfile) {
-          linkedInSection.style.display = "flex";
-        } else {
-          linkedInSection.style.display = "none";
-          showMessage(
-            "This extension only works on <a href='https://www.linkedin.com/in/' target='_blank'>LinkedIn Profile</a> page only.",
-            "error",
-          );
-        }
-      } catch (error) {
-        linkedInSection.style.display = "none";
-      }
+      linkedInSection.style.display =
+        response && response.isLinkedInProfile ? "flex" : "none";
+      linkedInUtils.style.display =
+        response && response.isLinkedDomainPage ? "flex" : "none";
     } catch (error) {
       linkedInSection.style.display = "none";
+      linkedInUtils.style.display = "none";
     }
   }
 
@@ -112,14 +106,14 @@ document.addEventListener("DOMContentLoaded", () => {
       showMessage("Processing...", "success", maxWaitingTime);
 
       setTimeout(() => {
-       button.disabled = false;
+        button.disabled = false;
       }, maxWaitingTime);
     } catch (error) {
       showMessage(
         `Failed to update ${errorContext}. Please try again. Error: ${error.message}`,
         "error",
       );
-     button.disabled = false;
+      button.disabled = false;
     }
   }
 
@@ -135,6 +129,21 @@ document.addEventListener("DOMContentLoaded", () => {
    */
   editAbout.addEventListener("click", async () => {
     await optimizeLinkedInProfile(editAbout, LinkedInPageType.EDIT_ABOUT);
+  });
+
+  findJobsButton.addEventListener("click", async () => {
+    try {
+      const tab = await getActiveLinkedInTabOrHide();
+      if (!tab) return;
+      await chrome.tabs.sendMessage(tab.id, {
+        type: "OPEN_LINKEDIN_JOB_SEARCH",
+      });
+    } catch (error) {
+      showMessage(
+        `Failed to open LinkedIn job search. Please try again. Error: ${error.message}`,
+        "error",
+      );
+    }
   });
 
   var lastTimer = null;
@@ -173,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (message.buttonId && message.isDone) {
           const button = document.getElementById(message.buttonId);
           if (button) {
-           button.disabled = false;
+            button.disabled = false;
           }
         }
         sendResponse && sendResponse({ received: true });

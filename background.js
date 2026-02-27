@@ -80,3 +80,32 @@ function typeaheadPageWorldLogic(selector, newValue) {
     }, 300);
   });
 }
+
+// Single unified message listener - handles ALL message types
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // ---- LinkedIn page detected ----
+  if (message.type === "LINKEDIN_PAGE_DETECTED") {
+    return false;
+  }
+
+  // ---- Inject typeahead script into page world ----
+  if (message.type === "INJECT_TYPEAHEAD_SCRIPT") {
+    console.log("Background: Injecting typeahead script with:", message);
+    chrome.scripting
+      .executeScript({
+        target: { tabId: sender.tab.id },
+        world: "MAIN",
+        func: typeaheadPageWorldLogic,
+        args: [message.selector, message.newValue],
+      })
+      .then(() => {
+        sendResponse({ status: "injected" });
+      })
+      .catch((err) => {
+        console.error("Background: injection failed:", err.message);
+        sendResponse({ status: "failed", error: err.message });
+      });
+
+    return true;
+  }
+});

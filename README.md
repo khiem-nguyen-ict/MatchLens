@@ -22,8 +22,8 @@ Open the extension popup and paste your profile data in JSON, for example:
 
 ```json
 {
-  "additionalName": "KN",
   "about": "I am a Senior Full-Stack Engineer with over 20 years of experience designing scalable web platforms and leading engineering teams across healthcare, AI, and enterprise systems.\n\nMy core strength is frontend architecture using React and TypeScript, combined with robust backend integrations in Java Spring and microservices environments. I focus on building clean, maintainable systems that translate complex business requirements into reliable technical solutions.\n\nThroughout my career, I have:\n• Led cross-border engineering teams\n• Designed cloud-native architectures (AWS & Azure)\n• Delivered production systems serving international clients\n• Bridged technical execution with business objectives\n\nI work comfortably across architecture, hands-on development, and technical leadership. My approach emphasizes clarity, scalability, and long-term maintainability over quick fixes.\n\nCurrently based in Finland and open to Senior Frontend, Full-Stack, or Technical Lead roles in product-driven companies.",
+  "additionalName": "KN",
   "city": "Turku",
   "company": "TMA Solutions",
   "country": "Finland",
@@ -31,6 +31,7 @@ Open the extension popup and paste your profile data in JSON, for example:
   "firstName": "Khiem Thanh",
   "headline": "Senior Full-Stack Engineer (React + Java Spring) | Frontend Architecture | Cloud & Microservices | Finland",
   "industry": "Software Development",
+  "jobSearch": "(\"Software Engineer\" OR \"Developer\") AND (Intern OR Trainee OR Junior) AND Finland",
   "lastName": "Nguyen",
   "phone": "+35844[REDACTED]",
   "pronouns": "He/Him",

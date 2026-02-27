@@ -318,6 +318,44 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
   }, checkInterval);
 }
 
+/**
+ * Opens a LinkedIn job search page in a new tab using the job search keywords
+ * stored in the user's profile settings.
+ *
+ * Retrieves the `jobSearch` field from `profile` in chrome.storage.local and
+ * constructs a LinkedIn job search URL with the encoded keywords. If the keywords
+ * are empty or whitespace-only, an alert is shown and no tab is opened.
+ *
+ * @async
+ * @function openLinkedInJobSearch
+ * @returns {Promise<string|null>} Resolves with the constructed LinkedIn search URL
+ *                                 if opened, or `null` if keywords were empty.
+ *
+ * @example
+ * const url = await openLinkedInJobSearch();
+ * if (!url) console.log("No job search keywords set in profile.");
+ */
+async function openLinkedInJobSearch() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get("profile", (data) => {
+      const keywords = data?.profile?.jobSearch || "";
+
+      if (!keywords.trim()) {
+        alert(
+          "No job search keywords set. Please update your profile settings.",
+        );
+        resolve(null);
+        return;
+      }
+
+      const encodedKeywords = encodeURIComponent(keywords);
+      const url = `https://www.linkedin.com/jobs/search-results/?keywords=${encodedKeywords}&origin=JOBS_HOME_SEARCH_BUTTON`;
+      window.open(url, "_blank");
+      resolve(url);
+    });
+  });
+}
+
 // Listen for messages from popup or background
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
@@ -336,9 +374,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     case "DETECT_LINKEDIN_PAGE":
       sendResponse({
+        isLinkedDomainPage: /linkedin\.com/.test(window.location.href),
         isLinkedInProfile: isLinkedInProfilePage(),
         profileId: extractProfileId(),
       });
+      break;
+    case "INJECT_TYPEAHEAD_SCRIPT":
+      break; // Missing case handler for typeahead script injection, should be handled in background.js
+    case "OPEN_LINKEDIN_JOB_SEARCH":
+      openLinkedInJobSearch();
+      break;
+    default:
       break;
   }
 });
