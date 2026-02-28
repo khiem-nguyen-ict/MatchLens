@@ -1,14 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
   const profileTextarea = document.getElementById("profile");
-  const saveButton = document.getElementById("save");
-  const editIntro = document.getElementById("editIntro");
-  const editAbout = document.getElementById("editAbout");
-  const linkedInSection = document.getElementById("linkedInSection");
-  const linkedInUtils = document.getElementById("linkedInUtils");
+  const saveSettingsButton = document.getElementById("saveSettings");
+  const editIntroButton = document.getElementById("editIntro");
+  const editAboutButton = document.getElementById("editAbout");
+  const linkedInProfileSection = document.getElementById(
+    "linkedInProfileSection",
+  );
+  const linkedInJobSection = document.getElementById("linkedInJobSection");
   const linkedInMessage = document.getElementById("linkedInMessage");
   const findJobsButton = document.getElementById("findJobs");
+  const getJobDescriptionButton = document.getElementById("getJobDescription");
 
   var profile = null;
+  var lastTimer = null;
 
   // Load and display saved profile
   chrome.storage.local.get("profile", (data) => {
@@ -31,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Save button click handler
-  saveButton.addEventListener("click", async () => {
+  saveSettingsButton.addEventListener("click", async () => {
     try {
       const profile = JSON.parse(profileTextarea.value);
       await chrome.storage.local.set({ profile });
@@ -54,13 +58,15 @@ document.addEventListener("DOMContentLoaded", () => {
         type: "DETECT_LINKEDIN_PAGE",
       });
 
-      linkedInSection.style.display =
+      linkedInProfileSection.style.display =
         response && response.isLinkedInProfile ? "flex" : "none";
-      linkedInUtils.style.display =
+      linkedInJobSection.style.display =
         response && response.isLinkedDomainPage ? "flex" : "none";
+      getJobDescriptionButton.style.display =
+        response && response.isJobDetailsPage ? "block" : "none";
     } catch (error) {
-      linkedInSection.style.display = "none";
-      linkedInUtils.style.display = "none";
+      linkedInProfileSection.style.display = "none";
+      linkedInJobSection.style.display = "none";
     }
   }
 
@@ -120,15 +126,15 @@ document.addEventListener("DOMContentLoaded", () => {
   /**
    * Edit Intro
    */
-  editIntro.addEventListener("click", async () => {
-    await optimizeLinkedInProfile(editIntro, LinkedInPageType.EDIT_INTRO);
+  editIntroButton.addEventListener("click", async () => {
+    await optimizeLinkedInProfile(editIntroButton, LinkedInPageType.EDIT_INTRO);
   });
 
   /**
    * Edit About
    */
-  editAbout.addEventListener("click", async () => {
-    await optimizeLinkedInProfile(editAbout, LinkedInPageType.EDIT_ABOUT);
+  editAboutButton.addEventListener("click", async () => {
+    await optimizeLinkedInProfile(editAboutButton, LinkedInPageType.EDIT_ABOUT);
   });
 
   findJobsButton.addEventListener("click", async () => {
@@ -146,7 +152,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  var lastTimer = null;
+  getJobDescriptionButton.addEventListener("click", async () => {
+    try {
+      const tab = await getActiveLinkedInTabOrHide();
+      if (!tab) return;
+      const response = await chrome.tabs.sendMessage(tab.id, {
+        type: "GET_JOB_DESCRIPTIONS",
+      });
+      alert(JSON.stringify(response, null, 2));
+    } catch (error) {
+      showMessage(
+        `Failed to get job descriptions. Please try again. Error: ${error.message}`,
+        "error",
+      );
+    }
+  });
 
   /**
    * Display message to user

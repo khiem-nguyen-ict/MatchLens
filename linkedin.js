@@ -63,6 +63,28 @@ function getLanguageList() {
 }
 
 /**
+ * Extracts "About the job" and "About the company" sections from LinkedIn.
+ * @returns {{aboutJob: string|null, aboutCompany: string|null}|null} Object with extracted texts or null if the URL doesn't match.
+ * @example
+ * {
+ * "aboutJob": "Teleste is an international technology group...",
+ * "aboutCompany": "Teleste offers an integrated product..."
+ * }
+ */ function getJobDescriptions() {
+  if (window.location.href.includes("linkedin.com/jobs/")) {
+    const sections = Array.from(
+      document.querySelectorAll('[data-testid="expandable-text-box"]'),
+    ).map((el) => el.innerText);
+
+    return {
+      aboutJob: sections[0] || null,
+      aboutCompany: sections[1] || null,
+    };
+  }
+  return null;
+}
+
+/**
  * Update a typeahead/autocomplete input on LinkedIn.
  * Uses script injection to access React internals from the page world,
  * bypassing Chrome extension's isolated world restriction.
@@ -376,13 +398,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({
         isLinkedDomainPage: /linkedin\.com/.test(window.location.href),
         isLinkedInProfile: isLinkedInProfilePage(),
+        isJobDetailsPage:
+          /linkedin\.com\/jobs\/search-results\/\?currentJobId=/.test(
+            window.location.href,
+          ),
         profileId: extractProfileId(),
       });
       break;
-    case "INJECT_TYPEAHEAD_SCRIPT":
-      break; // Missing case handler for typeahead script injection, should be handled in background.js
     case "OPEN_LINKEDIN_JOB_SEARCH":
       openLinkedInJobSearch();
+      break;
+    case "GET_JOB_DESCRIPTIONS":
+      sendResponse(getJobDescriptions());
       break;
     default:
       break;

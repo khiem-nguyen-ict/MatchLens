@@ -10,112 +10,164 @@
         }
 
         body {
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Oxygen, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-            font-size: 14.5px;
+            /* LinkedIn's exact font stack */
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 14px;
             font-style: normal;
             font-weight: 400;
+            line-height: 1.5;
             margin: 0;
             padding: 16px;
             width: 320px;
-            background: white;
-            color: #000000E6;
+            /* LinkedIn's signature warm-gray page background */
+            background: #f3f2ef;
+            /* LinkedIn's primary text: rgba(0,0,0,0.9) */
+            color: rgba(0, 0, 0, 0.9);
         }
 
         h1,
         h2 {
-            margin-bottom: 8px;
+            margin-top: 0;
+            margin-bottom: 4px;
             text-align: center;
-            color: #0A66C2;
+            /* LinkedIn uses its blue only on interactive/brand elements, not headings */
+            color: rgba(0, 0, 0, 0.9);
+            font-weight: 600;
+            letter-spacing: -0.01em;
         }
 
         h1 {
-            font-size: 18px;
+            font-size: 20px;
+            line-height: 1.3;
         }
 
         h2 {
-            font-size: 14px;
+            font-size: 16px;
+            line-height: 1.3;
         }
 
         .info {
-            font-size: 13px;
-            color: #00000099;
+            font-size: 12px;
+            /* LinkedIn secondary text: rgba(0,0,0,0.6) */
+            color: rgba(0, 0, 0, 0.6);
             margin-bottom: 12px;
-            line-height: 1.3;
+            line-height: 1.4;
             text-align: center;
-            border-bottom: 1px solid #dcdde1;
-            padding-bottom: 8px;
+            /* LinkedIn uses rgba(0,0,0,0.15) for dividers */
+            border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+            padding-bottom: 12px;
         }
 
         #profile,
         input[type="text"] {
             width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #dcdde1;
+            padding: 8px 12px;
+            /* LinkedIn inputs have a nearly flat radius */
+            border: 1px solid rgba(0, 0, 0, 0.4);
             border-radius: 4px;
+            background: #fff;
+            color: rgba(0, 0, 0, 0.9);
+            font-family: inherit;
+            font-size: 14px;
+            transition: border-color 0.15s ease;
+            outline: none;
+        }
+
+        #profile:focus,
+        input[type="text"]:focus {
+            border-color: #0a66c2;
+            box-shadow: 0 0 0 1px #0a66c2;
         }
 
         #profile {
             height: 120px;
-            font-family: monospace;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
             resize: vertical;
-            transition: border 0.2s;
             font-size: 12px;
+            line-height: 1.5;
         }
 
         .buttons {
             display: flex;
-            gap: 6px;
+            gap: 8px;
             margin-top: 12px;
         }
 
         button {
             flex: 1;
-            padding: 8px 12px;
+            padding: 6px 16px;
+            font-family: inherit;
+            font-size: 16px;
             font-weight: 600;
+            line-height: 1.5;
             border: none;
             border-radius: 24px;
             cursor: pointer;
-            color: white;
-            transition: background 0.2s, transform 0.1s;
-            height: 35px;
+            color: #fff;
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
+            height: 36px;
+            letter-spacing: 0;
+            white-space: nowrap;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         button:disabled {
-            background-color: #dcdde1 !important;
-            color: #a0a0a0 !important;
+            background-color: rgba(0, 0, 0, 0.08) !important;
+            color: rgba(0, 0, 0, 0.3) !important;
             cursor: not-allowed !important;
             border: none !important;
+            box-shadow: none !important;
             opacity: 1;
         }
 
+        /* LinkedIn primary CTA */
         .primary-button {
-            background-color: #0A66C2;
+            background-color: #0a66c2;
         }
 
-        .primary-button:hover {
-            background-color: #084d8a;
+        .primary-button:hover:not(:disabled) {
+            /* LinkedIn's darker hover: #004182 */
+            background-color: #004182;
         }
 
+        .primary-button:active:not(:disabled) {
+            background-color: #003375;
+        }
+
+        /* LinkedIn secondary/ghost button */
         .secondary-button {
-            background-color: white;
-            color: #0A66C2;
-            border: 1px solid #0A66C2;
+            background-color: #ffffff;
+            color: #0a66c2;
+            border: 1.5px solid #0a66c2;
         }
 
-        .secondary-button:hover {
-            background-color: #f0f4ff;
+        .secondary-button:hover:not(:disabled) {
+            background-color: rgba(112, 181, 249, 0.15);
+            border-color: #0a66c2;
+        }
+
+        .secondary-button:active:not(:disabled) {
+            background-color: rgba(112, 181, 249, 0.3);
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.9);
         }
 
         .footer {
             font-size: 11px;
-            color: #718093;
-            margin-top: 8px;
+            /* LinkedIn tertiary/muted text */
+            color: rgba(0, 0, 0, 0.45);
+            margin-top: 10px;
             text-align: center;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -129,17 +181,18 @@
 
     <textarea id="profile" placeholder="Paste your profile JSON here"></textarea>
 
-    <div class="buttons">
-        <button id="save" class="secondary-button">Save</button>
+    <div class="buttons" id="linkedInSettings">
+        <button id="saveSettings" class="secondary-button">Save</button>
     </div>
 
-    <div class="buttons" id="linkedInSection" style="display: none;">
+    <div class="buttons" id="linkedInProfileSection" style="display: none;">
         <button id="editIntro" class="secondary-button">Edit Intro</button>
         <button id="editAbout" class="secondary-button">Edit About</button>
     </div>
 
-    <div class="buttons" id="linkedInUtils">
+    <div class="buttons" id="linkedInJobSection" style="display: none;">
         <button id="findJobs" class="primary-button">Find Jobs</button>
+        <button id="getJobDescription" class="secondary-button">Job Description</button>
     </div>
 
     <div id="linkedInMessage" class="info" style="margin-top: 12px;"></div>
