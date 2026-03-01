@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const linkedInJobSection = document.getElementById("linkedInJobSection");
   const linkedInMessage = document.getElementById("linkedInMessage");
   const findJobsButton = document.getElementById("findJobs");
-  const getJobDescriptionButton = document.getElementById("getJobDescription");
+  const smartApplyButton = document.getElementById("smartApplyJob");
   const loginBtn = document.getElementById("linkedinLogin");
   const thumbnailImage = document.getElementById("thumbnailImage");
   const linkedinLoginSpan = document.getElementById("linkedinLoginSpan");
@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
         response && response.isLinkedInProfile ? "flex" : "none";
       linkedInJobSection.style.display =
         response && response.isLinkedDomainPage ? "flex" : "none";
-      getJobDescriptionButton.style.display =
+      smartApplyButton.style.display =
         response && response.isJobDetailsPage ? "block" : "none";
     } catch (error) {
       linkedInProfileSection.style.display = "none";
@@ -155,15 +155,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  getJobDescriptionButton.addEventListener("click", async () => {
+  smartApplyButton.addEventListener("click", async () => {
     try {
       const tab = await getActiveLinkedInTabOrHide();
       if (!tab) return;
       const response = await chrome.tabs.sendMessage(tab.id, {
-        type: "GET_JOB_DESCRIPTIONS",
+        type: "SMART_APPLY_JOB",
       });
-      console.log("MatchLens: Job description response:", response);
-      alert(JSON.stringify(response, null, 2));
+      //console.log("MatchLens: Job description response:", response);
     } catch (error) {
       showMessage(
         `Failed to get job descriptions. Please try again. Error: ${error.message}`,

@@ -408,8 +408,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "OPEN_LINKEDIN_JOB_SEARCH":
       openLinkedInJobSearch();
       break;
-    case "GET_JOB_DESCRIPTIONS":
+    case "SMART_APPLY_JOB":
       sendResponse(getJobDescriptions());
+      // Find and click the Apply button by its data-view-name attribute
+      const applyBtn = document.querySelector(
+        'a[data-view-name="job-apply-button"]',
+      );
+      if (applyBtn) {
+        applyBtn.click();
+      } else {
+        console.warn("Apply button not found");
+      }
       break;
     default:
       break;
