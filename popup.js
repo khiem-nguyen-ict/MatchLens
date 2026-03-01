@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const linkedInMessage = document.getElementById("linkedInMessage");
   const findJobsButton = document.getElementById("findJobs");
   const getJobDescriptionButton = document.getElementById("getJobDescription");
+  const loginBtn = document.getElementById("linkedinLogin");
+  const thumbnailImage = document.getElementById("thumbnailImage");
+  const linkedinLoginSpan = document.getElementById("linkedinLoginSpan");
 
   var profile = null;
   var lastTimer = null;
@@ -109,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let maxWaitingTime = 10000 * LINKED_IN_FIELD_MAPPING[page].length; // Max waiting time based on number of fields
 
-      showMessage("Processing...", "success", maxWaitingTime);
+      showMessage("Processing…", "success", maxWaitingTime);
 
       setTimeout(() => {
         button.disabled = false;
@@ -159,6 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await chrome.tabs.sendMessage(tab.id, {
         type: "GET_JOB_DESCRIPTIONS",
       });
+      console.log("MatchLens: Job description response:", response);
       alert(JSON.stringify(response, null, 2));
     } catch (error) {
       showMessage(
@@ -207,7 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         sendResponse && sendResponse({ received: true });
         break;
-      // ...existing message types can be added here...
     }
   });
 
@@ -216,4 +219,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Recheck when tab changes (if user switches tabs)
   chrome.tabs.onActivated.addListener(checkLinkedInPage);
+
+  // 1. When popup opens, immediately reflect current login state
+  function updateLoginUI(user) {
+    if (user) {
+      loginBtn.disabled = true;
+      linkedinLoginSpan.textContent = user.user_metadata.given_name + " " + user.user_metadata.family_name;
+      thumbnailImage.alt = `Photo of ${user.user_metadata.given_name}`;
+      thumbnailImage.src = user.user_metadata.picture;
+      thumbnailImage.style.display = "block";
+    } else {
+      loginBtn.disabled = false;
+      linkedinLoginSpan.textContent = "Connect my LinkedIn account";
+      thumbnailImage.alt = "";
+      thumbnailImage.style.display = "none";
+      thumbnailImage.src = "";
+    }
+  }
+
+  // On popup open — source of truth
+  chrome.storage.local.get("linkedinUser", (data) => {
+    updateLoginUI(data.linkedinUser || null);
+  });
+
+  // If popup happens to be open when auth completes
+  chrome.runtime.onMessage.addListener((message) => {
+    if (message.type === "LINKEDIN_LOGIN_STATUS") {
+      if (message.status === "success") {
+        updateLoginUI(message.user);
+        showMessage("Login successful!", "success", 3000);
+      } else {
+        updateLoginUI(null);
+        showMessage(
+          "Login failed: " + (message.error || "Unknown error"),
+          "error",
+          3000,
+        );
+      }
+    }
+  });
+
+  loginBtn.addEventListener("click", () => {
+    loginBtn.disabled = true;
+    loginBtn.text = "Logging in…";
+    chrome.runtime.sendMessage({ type: "LINKEDIN_AUTHENTICATE" });
+  });
 });

@@ -67,8 +67,8 @@ function getLanguageList() {
  * @returns {{aboutJob: string|null, aboutCompany: string|null}|null} Object with extracted texts or null if the URL doesn't match.
  * @example
  * {
- * "aboutJob": "Teleste is an international technology group...",
- * "aboutCompany": "Teleste offers an integrated product..."
+ * "aboutJob": "Teleste is an international technology group…",
+ * "aboutCompany": "Teleste offers an integrated product…"
  * }
  */ function getJobDescriptions() {
   if (window.location.href.includes("linkedin.com/jobs/")) {
@@ -150,7 +150,7 @@ function isTypeaheadInput(input) {
 
 async function updateSelectValue(select, newValue) {
   if (!select) {
-    console.error("Select element not found");
+    console.error("MatchLens: Select element not found");
     return false;
   }
 
@@ -355,7 +355,7 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
  *
  * @example
  * const url = await openLinkedInJobSearch();
- * if (!url) console.log("No job search keywords set in profile.");
+ * if (!url) console.log("MatchLens: No job search keywords set in profile.");
  */
 async function openLinkedInJobSearch() {
   return new Promise((resolve) => {
