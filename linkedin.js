@@ -76,6 +76,8 @@ function getLanguageList() {
       document.querySelectorAll('[data-testid="expandable-text-box"]'),
     ).map((el) => el.innerText);
 
+    //sections = sections.map((s) => s.replace("\n… more", "").trim()); // This code makes bug!!!! (silent bug)
+
     return {
       aboutJob: sections[0] || null,
       aboutCompany: sections[1] || null,
@@ -409,28 +411,51 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       openLinkedInJobSearch();
       break;
     case "SMART_APPLY_JOB":
-      const data = getJobDescriptions();
-      sendResponse(data);
-      // Find and click the Apply button by its data-view-name attribute
-      const applyBtn = document.querySelector(
-        'a[data-view-name="job-apply-button"]',
-      );
-      if (applyBtn && data) {
-        applyBtn.click();
-        // Call cvtailor
-        // content_script.js injected into cvtailor.adcrew.us
-        // Extension popup.js
+      chrome.runtime.sendMessage({
+        type: "PROGRESS_STATUS",
+        status: `Applying...`,
+      });
+      try {
+        let data = getJobDescriptions();
+        sendResponse(data);
+        // Find and click the Apply button by its data-view-name attribute
+        const applyBtn = document.querySelector(
+          'a[data-view-name="job-apply-button"]',
+        );
+        if (applyBtn && data) {
+          applyBtn.click();
+          // Call cvtailor
+          // content_script.js injected into cvtailor.adcrew.us
+          // Extension popup.js
 
-        chrome.runtime.sendMessage({
-          type: "OPEN_CV_TAILOR",
-          payload: data.aboutCompany + "\r\n" + data.aboutJob,
-        });
-      } else {
-        chrome.runtime.sendMessage({
+          chrome.storage.local.get("profile", (storageData) => {
+            data = { ...data, ...storageData?.profile };
+            try {
+              chrome.runtime.sendMessage({
+                type: "OPEN_CV_TAILOR",
+                payload: JSON.stringify(data),
+              });
+            } catch (e) {
+              chrome.runtime.sendMessage({
+                type: "PROGRESS_STATUS",
+                status: `Something went wrong! Please contact the author.`,
+                isError: true,
+              });
+            }
+          });
+        } else {
+          chrome.runtime.sendMessage({
             type: "PROGRESS_STATUS",
             status: `I couldn't find the “Apply” button for this role. You might want to try a different job posting.`,
-            isError: true
+            isError: true,
           });
+        }
+      } catch (e) {
+        chrome.runtime.sendMessage({
+          type: "PROGRESS_STATUS",
+          status: `Unable to read thge job description.`,
+          isError: true,
+        });
       }
       break;
     default:

@@ -82,14 +82,10 @@ function typeaheadPageWorldLogic(selector, newValue) {
 }
 
 chrome.runtime.onMessage.addListener((message) => {
-  console.log("📨 content.js received message:", message); // ← does this appear?
-
   if (message.type === "CV_TAILOR_TRANSFER") {
-    console.log("📤 Forwarding to React app...");
     window.postMessage(
       { type: "CV_TAILOR_TRANSFER", payload: message.payload },
       "*",
     );
-    console.log("✅ postMessage sent");
   }
 });

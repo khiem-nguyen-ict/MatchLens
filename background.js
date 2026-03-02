@@ -202,7 +202,7 @@ function sendTabMessage(tabId, payload) {
   );
 }
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
   if (message.type === "OPEN_CV_TAILOR") {
     chrome.tabs.query({ url: "https://cvtailor.adcrew.us/*" }, (tabs) => {
       if (tabs.length > 0) {
