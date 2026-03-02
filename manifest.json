@@ -10,7 +10,11 @@
     "128": "icons/icon128.png"
   },
   "permissions": ["storage", "activeTab", "scripting", "tabs", "identity"],
-  "host_permissions": ["*://www.linkedin.com/*", "*://gewcvyaulhlfgxsvuvqj.supabase.co/*"],
+  "host_permissions": [
+    "*://www.linkedin.com/*",
+    "*://gewcvyaulhlfgxsvuvqj.supabase.co/*",
+    "*://cvtailor.adcrew.us/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -25,7 +29,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.linkedin.com/*"],
+      "matches": ["*://www.linkedin.com/*", "*://cvtailor.adcrew.us/*"],
       "js": ["utils.js", "supabase.js", "content.js", "linkedin.js"],
       "run_at": "document_idle"
     }

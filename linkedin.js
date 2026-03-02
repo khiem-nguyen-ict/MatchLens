@@ -409,15 +409,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       openLinkedInJobSearch();
       break;
     case "SMART_APPLY_JOB":
-      sendResponse(getJobDescriptions());
+      const data = getJobDescriptions();
+      sendResponse(data);
       // Find and click the Apply button by its data-view-name attribute
       const applyBtn = document.querySelector(
         'a[data-view-name="job-apply-button"]',
       );
-      if (applyBtn) {
+      if (applyBtn && data) {
         applyBtn.click();
+        // Call cvtailor
+        // content_script.js injected into cvtailor.adcrew.us
+        // Extension popup.js
+
+        chrome.runtime.sendMessage({
+          type: "OPEN_CV_TAILOR",
+          payload: data.aboutCompany + "\r\n" + data.aboutJob,
+        });
       } else {
-        console.warn("Apply button not found");
+        chrome.runtime.sendMessage({
+            type: "PROGRESS_STATUS",
+            status: `I couldn't find the “Apply” button for this role. You might want to try a different job posting.`,
+            isError: true
+          });
       }
       break;
     default:

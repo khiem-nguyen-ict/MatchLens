@@ -185,3 +185,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 });
+
+function sendTabMessage(tabId, payload) {
+  // Add this wrapper to both sendMessage calls
+  chrome.tabs.sendMessage(
+    tabId,
+    {
+      type: "CV_TAILOR_TRANSFER",
+      payload: payload,
+    },
+    (_response) => {
+      if (chrome.runtime.lastError) {
+        console.warn("sendMessage failed:", chrome.runtime.lastError.message);
+      }
+    },
+  );
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "OPEN_CV_TAILOR") {
+    chrome.tabs.query({ url: "https://cvtailor.adcrew.us/*" }, (tabs) => {
+      if (tabs.length > 0) {
+        sendTabMessage(tabs[0].id, message.payload);
+        chrome.tabs.update(tabs[0].id, { active: true });
+      } else {
+        chrome.tabs.create({ url: "https://cvtailor.adcrew.us" }, (tab) => {
+          chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
+            if (tabId === tab.id && info.status === "complete") {
+              chrome.tabs.onUpdated.removeListener(listener);
+              setTimeout(() => {
+                sendTabMessage(tab.id, message.payload);
+              }, 500);
+            }
+          });
+        });
+      }
+    });
+  }
+});
