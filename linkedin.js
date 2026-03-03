@@ -403,7 +403,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         isJobDetailsPage:
           /linkedin\.com\/jobs\/search-results\/\?currentJobId=/.test(
             window.location.href,
-          ),
+          ) || /linkedin\.com\/jobs\/view\//.test(window.location.href),
         profileId: extractProfileId(),
       });
       break;
