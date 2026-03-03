@@ -20,10 +20,7 @@ async function saveSessionSettings(session) {
         })
         .setHeader("Authorization", `Bearer ${session.accessToken}`);
       if (!error) {
-        console.error(
-          "saveSessionSettings, save profile to settings failed - " +
-            error.message,
-        );
+        console.error("saveSessionSettings, save profile to settings failed");
       } else {
         console.info("saveSessionSettings: Save profile successfully!");
       }
