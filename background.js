@@ -9,36 +9,51 @@ const _supabase = createClient(
 
 // Sync settings to Supabase — pass accessToken directly to avoid session
 // storage issues in service workers (no localStorage available)
-async function syncSettings(accessToken, userId, profile) {
-  if (!accessToken || !userId || !profile) {
-    console.warn("syncSettings: missing required params, skipping.");
-    return;
-  }
-
-  console.log("Syncing profile to Supabase for user:", userId);
+async function saveSessionSettings(session) {
+  chrome.storage.local.get("profile", (storageData) => {
+    if (storageData.profile) {
+      const { error } = _supabase
+        .from("settings")
+        .upsert({
+          id: session.id,
+          profile: storageData.profile,
+        })
+        .setHeader("Authorization", `Bearer ${session.accessToken}`);
+      if (!error) {
+        console.error(
+          "saveSessionSettings, save profile to settings failed - " +
+            error.message,
+        );
+      } else {
+        console.info("saveSessionSettings: Save profile successfully!");
+      }
+    } else {
+      console.warn(
+        "saveSessionSettings, save profile: No profile found to save!",
+      );
+    }
+  });
 
   const { error } = await _supabase
-    .from("settings")
-    .upsert({ id: userId, profile })
-    .setHeader("Authorization", `Bearer ${accessToken}`);
-
-  if (error) {
+    .from("sessions")
+    .upsert({ id: session.id, session })
+    .setHeader("Authorization", `Bearer ${session.accessToken}`);
+  if (!error) {
     console.error(
-      "syncSettings: upsert failed:",
-      error.message,
-      error.code,
-      error.details,
+      "saveSessionSettings, save session failed - " + error.message,
     );
   } else {
-    console.log("syncSettings: success for user:", userId);
+    console.info("saveSessionSettings: Save session successfully!");
   }
 }
 
-function tryUpdateLoginStatus(user, message, status) {
-  if (user) {
+async function saveJobDescription(jd) {}
+
+function tryUpdateLoginStatus(session, message, status) {
+  if (session) {
     chrome.storage.local.set({
       linkedinUser: {
-        ...user,
+        ...session,
       },
     });
   } else {
@@ -48,7 +63,7 @@ function tryUpdateLoginStatus(user, message, status) {
     chrome.runtime.sendMessage({
       type: "LINKEDIN_LOGIN_STATUS",
       status,
-      user,
+      session,
       message,
     });
   } catch (e) {
@@ -123,23 +138,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
               user = sessionData.user;
 
-              // 5. Sync any existing local profile to Supabase.
-              // Pass accessToken and userId directly — don't rely on stored
-              // session since localStorage is unavailable in service workers.
-              chrome.storage.local.get("profile", (storageData) => {
-                if (storageData.profile) {
-                  console.log(
-                    "Syncing existing profile to Supabase:",
-                    storageData.profile,
-                  );
-                  syncSettings(
-                    accessToken,
-                    sessionData.user.id,
-                    storageData.profile,
-                  );
-                }
-              });
-              tryUpdateLoginStatus(user, null, "success");
+              const session = {
+                accessToken,
+                refreshToken,
+                ...user,
+              };
+
+              saveSessionSettings(session);
+              tryUpdateLoginStatus(session, null, "success");
             } else {
               tryUpdateLoginStatus(
                 null,

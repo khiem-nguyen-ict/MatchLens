@@ -62,6 +62,105 @@ function getLanguageList() {
   return languages;
 }
 
+function extractLinkedInJobData(root = document) {
+  const data = {};
+
+  /* =========================
+     COMPANY
+  ========================== */
+
+  const companyLink = root.querySelector('a[href*="/company/"]');
+  if (companyLink) {
+    data.companyName = companyLink.innerText.trim();
+    data.companyUrl = companyLink.href;
+  }
+
+  /* =========================
+     JOB TITLE
+  ========================== */
+
+  const titleElement = Array.from(root.querySelectorAll("p")).find(
+    (p) =>
+      p.innerText &&
+      !p.innerText.includes("·") &&
+      !p.innerText.includes("ago") &&
+      !p.innerText.includes("Responses") &&
+      !p.innerText.includes("Undo") &&
+      p.innerText.length < 120 &&
+      p.innerText.match(/[A-Za-z]/),
+  );
+
+  if (titleElement) {
+    data.jobTitle = titleElement.childNodes[0].textContent.trim();
+  }
+
+  /* =========================
+     LOCATION + META LINE
+  ========================== */
+
+  const metaLine = Array.from(root.querySelectorAll("p")).find(
+    (p) => p.innerText.includes("·") && p.innerText.includes("ago"),
+  );
+
+  if (metaLine) {
+    const parts = metaLine.innerText.split("·").map((s) => s.trim());
+
+    data.location = parts[0] || null;
+    data.postedTime = parts[1] || null;
+    data.applicants = parts[2] || null;
+  }
+
+  /* =========================
+     WORK TYPE (Hybrid / Remote)
+  ========================== */
+
+  const workTypeBtn = Array.from(root.querySelectorAll("button")).find(
+    (btn) =>
+      btn.innerText.includes("Hybrid") ||
+      btn.innerText.includes("Remote") ||
+      btn.innerText.includes("On-site"),
+  );
+
+  if (workTypeBtn) {
+    data.workType = workTypeBtn.innerText.trim();
+  }
+
+  /* =========================
+     EMPLOYMENT TYPE
+  ========================== */
+
+  const employmentBtn = Array.from(root.querySelectorAll("button")).find(
+    (btn) =>
+      btn.innerText.includes("Full-time") ||
+      btn.innerText.includes("Part-time") ||
+      btn.innerText.includes("Contract"),
+  );
+
+  if (employmentBtn) {
+    data.employmentType = employmentBtn.innerText.trim();
+  }
+
+  /* =========================
+     APPLY LINK
+  ========================== */
+
+  const applyLink = root.querySelector('a[aria-label*="Apply"]');
+  if (applyLink) {
+    data.applyUrl = applyLink.href;
+  }
+
+  /* =========================
+     SAVED STATUS
+  ========================== */
+
+  const savedBtn = root.querySelector('[data-view-name="job-save-button"]');
+  if (savedBtn) {
+    data.savedStatus = savedBtn.innerText.trim();
+  }
+
+  return data;
+}
+
 /**
  * Extracts "About the job" and "About the company" sections from LinkedIn.
  * @returns {{aboutJob: string|null, aboutCompany: string|null}|null} Object with extracted texts or null if the URL doesn't match.
@@ -72,6 +171,10 @@ function getLanguageList() {
  * }
  */ function getJobDescriptions() {
   if (window.location.href.includes("linkedin.com/jobs/")) {
+    // Get job, company info:
+
+    const header = extractLinkedInJobData();
+
     const sections = Array.from(
       document.querySelectorAll('[data-testid="expandable-text-box"]'),
     ).map((el) => el.innerText);
@@ -79,6 +182,7 @@ function getLanguageList() {
     //sections = sections.map((s) => s.replace("\n… more", "").trim()); // This code makes bug!!!! (silent bug)
 
     return {
+      ...header,
       aboutJob: sections[0] || null,
       aboutCompany: sections[1] || null,
     };
@@ -418,6 +522,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         let data = getJobDescriptions();
         sendResponse(data);
+
+        return; // DEBUG, TEMPORARY CODE
+
         // Find and click the Apply button by its data-view-name attribute
         const applyBtn = document.querySelector(
           'a[data-view-name="job-apply-button"]',

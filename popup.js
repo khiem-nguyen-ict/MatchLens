@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginBtn = document.getElementById("linkedinLogin");
   const thumbnailImage = document.getElementById("thumbnailImage");
   const linkedinLoginSpan = document.getElementById("linkedinLoginSpan");
+  const profileInfo = document.getElementById("profileInfo");
 
   var profile = null;
   var lastTimer = null;
@@ -162,7 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await chrome.tabs.sendMessage(tab.id, {
         type: "SMART_APPLY_JOB",
       });
-      //console.log("MatchLens: Job description response:", response);
+
+      chrome.storage.local.set({
+        lastJobDescription: {
+          ...response,
+        },
+      });
     } catch (error) {
       showMessage(
         `Failed to get job descriptions. Please try again. Error: ${error.message}`,
@@ -220,20 +226,23 @@ document.addEventListener("DOMContentLoaded", () => {
   chrome.tabs.onActivated.addListener(checkLinkedInPage);
 
   // 1. When popup opens, immediately reflect current login state
-  function updateLoginUI(user) {
-    if (user) {
-      loginBtn.disabled = true;
-      linkedinLoginSpan.textContent = user.user_metadata.given_name + " " + user.user_metadata.family_name;
-      thumbnailImage.alt = `Photo of ${user.user_metadata.given_name}`;
-      thumbnailImage.src = user.user_metadata.picture;
+  function updateLoginUI(session) {
+    if (session) {
+      linkedinLoginSpan.textContent = "Sign Out";
+      profileInfo.innerHTML = `<b>${session.user_metadata.given_name + " " + session.user_metadata.family_name}<b/>`;
+      profileInfo.style.display = "block";
+      thumbnailImage.alt = `Photo of ${session.user_metadata.given_name}`;
+      thumbnailImage.src = session.user_metadata.picture;
       thumbnailImage.style.display = "block";
     } else {
-      loginBtn.disabled = false;
       linkedinLoginSpan.textContent = "Connect my LinkedIn account";
       thumbnailImage.alt = "";
       thumbnailImage.style.display = "none";
       thumbnailImage.src = "";
+      profileInfo.innerHTML = "";
+      profileInfo.style.display = "none";
     }
+    loginBtn.disabled = false;
   }
 
   // On popup open — source of truth
@@ -245,7 +254,7 @@ document.addEventListener("DOMContentLoaded", () => {
   chrome.runtime.onMessage.addListener((message) => {
     if (message.type === "LINKEDIN_LOGIN_STATUS") {
       if (message.status === "success") {
-        updateLoginUI(message.user);
+        updateLoginUI(message.session);
         showMessage("Login successful!", "success", 3000);
       } else {
         updateLoginUI(null);
@@ -260,7 +269,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loginBtn.addEventListener("click", () => {
     loginBtn.disabled = true;
-    loginBtn.text = "Logging in…";
-    chrome.runtime.sendMessage({ type: "LINKEDIN_AUTHENTICATE" });
+    chrome.storage.local.get("linkedinUser", (data) => {
+      if (data.linkedinUser) {
+        loginBtn.text = "Signing Out…";
+        chrome.storage.local.clear();
+        updateLoginUI(null);
+      } else {
+        loginBtn.text = "Logging In…";
+        chrome.runtime.sendMessage({ type: "LINKEDIN_AUTHENTICATE" });
+      }
+    });
   });
 });
