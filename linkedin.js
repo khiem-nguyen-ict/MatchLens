@@ -75,23 +75,16 @@ function extractLinkedInJobData(root = document) {
     data.companyUrl = companyLink.href;
   }
 
-  /* =========================
-     JOB TITLE
-  ========================== */
-
-  const titleElement = Array.from(root.querySelectorAll("p")).find(
-    (p) =>
-      p.innerText &&
-      !p.innerText.includes("·") &&
-      !p.innerText.includes("ago") &&
-      !p.innerText.includes("Responses") &&
-      !p.innerText.includes("Undo") &&
-      p.innerText.length < 120 &&
-      p.innerText.match(/[A-Za-z]/),
+  const span = document.querySelector(
+    'span[role="img"][aria-label="Verified job"]',
   );
-
-  if (titleElement) {
-    data.jobTitle = titleElement.childNodes[0].textContent.trim();
+  if (span) {
+    try {
+      const t = span.closest("p").childNodes[0].textContent.trim();
+      if (t !== "") {
+        data.jobTitle = t;
+      }
+    } catch (e) {}
   }
 
   /* =========================
@@ -466,7 +459,7 @@ function processLinkedInOptimization(config, isDirectUpdate = true) {
 async function openLinkedInJobSearch() {
   return new Promise((resolve) => {
     chrome.storage.local.get("profile", (data) => {
-      const keywords = data?.profile?.jobSearch || "";
+      const keywords = data?.profile?.professional?.jobSearch || "";
 
       if (!keywords.trim()) {
         alert(
@@ -523,7 +516,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let data = getJobDescriptions();
         sendResponse(data);
 
-        return; // DEBUG, TEMPORARY CODE
+        // save last job
+        chrome.storage.local.set({ lastLinkedInJob: { ...data } });
 
         // Find and click the Apply button by its data-view-name attribute
         const applyBtn = document.querySelector(
@@ -536,16 +530,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           // Extension popup.js
 
           chrome.storage.local.get("profile", (storageData) => {
-            data = { ...data, ...storageData?.profile };
+            data = { jobDescription: { ...data }, ...storageData?.profile };
             try {
               chrome.runtime.sendMessage({
                 type: "OPEN_CV_TAILOR",
                 payload: JSON.stringify(data),
               });
+              // save job
+              saveJobDescription(data);
             } catch (e) {
               chrome.runtime.sendMessage({
                 type: "PROGRESS_STATUS",
-                status: `Something went wrong! Please contact the author.`,
+                status: `Something went wrong! Please contact the author (No local profile set).`,
                 isError: true,
               });
             }

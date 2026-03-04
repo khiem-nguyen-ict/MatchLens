@@ -27,39 +27,39 @@ const LinkedInPageType = {
 const LINKED_IN_FIELD_MAPPING = {
   [LinkedInPageType.EDIT_INTRO]: [
     {
-      key: "firstName",
+      key: "personalInfo.firstName",
       selector:
         '[data-view-name="top-card-edit-first-name-single-line-text-input"]',
     },
     {
-      key: "lastName",
+      key: "personalInfo.lastName",
       selector:
         '[data-view-name="top-card-edit-last-name-single-line-text-input"]',
     },
     {
-      key: "headline",
+      key: "professional.headline",
       selector:
         'div[contenteditable="true"][role="textbox"].tiptap.ProseMirror',
     },
     {
-      key: "additionalName",
+      key: "personalInfo.additionalName",
       selector:
         '[data-view-name="top-card-edit-add-former-name-single-line-text-input"]',
     },
     {
-      key: "industry",
+      key: "professional.industry",
       selector:
         '[data-view-name="top-card-edit-industry-single-line-text-input"]',
     },
     {
-      key: "pronouns",
+      key: "personalInfo.pronouns",
       selector:
         'select[aria-label="Month"][data-view-name="top-card-edit-edit-pronoun-button"]',
     },
   ],
   [LinkedInPageType.EDIT_ABOUT]: [
     {
-      key: "about",
+      key: "summary",
       selector:
         'textarea[data-view-name="form-add-summary-with-gai-multi-line-text-input"]',
     },

@@ -75,13 +75,89 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
+   * Safely get nested object value using dot-notation path
+   * Returns undefined if any part of the path doesn't exist
+   *
+   * @param {Object} obj - The object to query
+   * @param {string} path - Dot-notation path (e.g., "personalInfo.contact.email")
+   * @param {*} defaultValue - Optional default value if path not found
+   * @returns {*} The value at the path, defaultValue, or undefined
+   */
+  function getNestedValue(obj, path, defaultValue = undefined) {
+    if (!obj || typeof obj !== "object") {
+      return defaultValue;
+    }
+
+    if (!path || typeof path !== "string") {
+      return defaultValue;
+    }
+
+    const keys = path.split(".");
+    let result = obj;
+
+    for (const key of keys) {
+      // If current level is null/undefined, return default
+      if (result == null) {
+        return defaultValue;
+      }
+
+      // If current level doesn't have the key, return default
+      if (typeof result !== "object" || !(key in result)) {
+        return defaultValue;
+      }
+
+      result = result[key];
+    }
+
+    // If final result is null/undefined, return default
+    return result ?? defaultValue;
+  }
+
+  /**
+   * Check if a value at a given path is empty or missing
+   * Handles strings, arrays, objects, null, undefined safely
+   *
+   * @param {Object} obj - The object to query
+   * @param {string} path - Dot-notation path
+   * @returns {boolean} True if value is empty/missing, false otherwise
+   */
+  function isEmptyValue(obj, path) {
+    const value = getNestedValue(obj, path);
+
+    // null or undefined
+    if (value == null) {
+      return true;
+    }
+
+    // Empty string or whitespace-only string
+    if (typeof value === "string") {
+      return value.trim() === "";
+    }
+
+    // Empty array
+    if (Array.isArray(value)) {
+      return value.length === 0;
+    }
+
+    // Empty object (but not Date, RegExp, etc.)
+    if (typeof value === "object" && value.constructor === Object) {
+      return Object.keys(value).length === 0;
+    }
+
+    // Numbers, booleans, dates, etc. are considered "not empty"
+    return false;
+  }
+
+  /**
    * Sends an OPTIMIZE_LINKEDIN_PROFILE message to the active LinkedIn tab.
    * Disables the button during processing and re-enables it after a delay.
    */
   async function optimizeLinkedInProfile(button, page) {
     var data = {};
+
     LINKED_IN_FIELD_MAPPING[page].forEach(({ key }) => {
-      if (!profile[key] || profile[key].trim() === "") {
+      // Check if value is empty or missing
+      if (isEmptyValue(profile, key)) {
         showMessage(
           `Please enter a valid value for ${key} in your profile JSON`,
           "error",
@@ -89,9 +165,11 @@ document.addEventListener("DOMContentLoaded", () => {
         throw new Error(
           `Missing or empty field: ${key} in profile JSON. Check your input and try again.`,
         );
-      } else {
-        data[key] = profile[key].trim();
       }
+
+      // Value exists and is valid - use it
+      const value = getNestedValue(profile, key);
+      data[key] = value;
     });
 
     const config = {
@@ -111,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
         config,
       });
 
-      let maxWaitingTime = 10000 * LINKED_IN_FIELD_MAPPING[page].length; // Max waiting time based on number of fields
+      let maxWaitingTime = 10000 * LINKED_IN_FIELD_MAPPING[page].length;
 
       showMessage("Processing…", "success", maxWaitingTime);
 
@@ -120,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }, maxWaitingTime);
     } catch (error) {
       showMessage(
-        `Failed to update ${errorContext}. Please try again. Error: ${error.message}`,
+        `Failed to update. Please try again. Error: ${error.message}`,
         "error",
       );
       button.disabled = false;
@@ -246,8 +324,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // On popup open — source of truth
-  chrome.storage.local.get("linkedinUser", (data) => {
-    updateLoginUI(data.linkedinUser || null);
+  chrome.storage.local.get("linkedinSession", (data) => {
+    updateLoginUI(data.linkedinSession || null);
   });
 
   // If popup happens to be open when auth completes
@@ -269,8 +347,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loginBtn.addEventListener("click", () => {
     loginBtn.disabled = true;
-    chrome.storage.local.get("linkedinUser", (data) => {
-      if (data.linkedinUser) {
+    chrome.storage.local.get("linkedinSession", (data) => {
+      if (data.linkedinSession) {
         loginBtn.text = "Signing Out…";
         chrome.storage.local.clear();
         updateLoginUI(null);

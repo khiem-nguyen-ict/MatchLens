@@ -44,17 +44,38 @@ async function saveSessionSettings(session) {
   }
 }
 
-async function saveJobDescription(jd) {}
+async function saveJobDescription(description) {
+    chrome.storage.local.get("linkedinSession", (session) => {
+    if (session) {
+      const { error } = _supabase
+        .from("jobs")
+        .upsert({
+          id: session.id,
+          description,
+        })
+        .setHeader("Authorization", `Bearer ${session.accessToken}`);
+      if (!error) {
+        console.error("saveJobDescription, save job description to jobs failed");
+      } else {
+        console.info("saveJobDescription: Save job description successfully!");
+      }
+    } else {
+      console.warn(
+        "saveJobDescription, save profile: No job description found to save!",
+      );
+    }
+  });
+}
 
 function tryUpdateLoginStatus(session, message, status) {
   if (session) {
     chrome.storage.local.set({
-      linkedinUser: {
+      linkedinSession: {
         ...session,
       },
     });
   } else {
-    chrome.storage.local.remove("linkedinUser");
+    chrome.storage.local.remove("linkedinSession");
   }
   try {
     chrome.runtime.sendMessage({
