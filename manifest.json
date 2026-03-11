@@ -16,7 +16,7 @@
     "*://cvtailor.adcrew.us/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "js/background.js"
   },
   "action": {
     "default_popup": "popup.html",
@@ -30,7 +30,7 @@
   "content_scripts": [
     {
       "matches": ["*://www.linkedin.com/*", "*://cvtailor.adcrew.us/*"],
-      "js": ["utils.js", "supabase.js", "content.js", "linkedin.js"],
+      "js": ["js/utils.js", "js/supabase.js", "js/content.js", "js/linkedin.js"],
       "run_at": "document_idle"
     }
   ]

@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const thumbnailImage = document.getElementById("thumbnailImage");
   const linkedinLoginSpan = document.getElementById("linkedinLoginSpan");
   const profileInfo = document.getElementById("profileInfo");
+  const loginHint = document.getElementById("loginHint");
 
   var profile = null;
   var lastTimer = null;
@@ -312,6 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
       thumbnailImage.alt = `Photo of ${session.user_metadata.given_name}`;
       thumbnailImage.src = session.user_metadata.picture;
       thumbnailImage.style.display = "block";
+      loginHint.style.display = "none";
     } else {
       linkedinLoginSpan.textContent = "Connect my LinkedIn account";
       thumbnailImage.alt = "";
@@ -319,6 +321,7 @@ document.addEventListener("DOMContentLoaded", () => {
       thumbnailImage.src = "";
       profileInfo.innerHTML = "";
       profileInfo.style.display = "none";
+      loginHint.style.display = "block";
     }
     loginBtn.disabled = false;
   }
@@ -357,5 +360,40 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.runtime.sendMessage({ type: "LINKEDIN_AUTHENTICATE" });
       }
     });
+  });
+});
+
+// Initialize JSON Editor for profile
+document.addEventListener("DOMContentLoaded", function () {
+  const container = document.getElementById("profile-container");
+  const hiddenProfile = document.getElementById("profile");
+
+  // Initialize the JSON editor
+  JSONEditor.init("profile-container");
+
+  // Get the actual editor textarea
+  const editor = document.getElementById("editor");
+
+  // Sync: JSON editor -> hidden profile textarea
+  if (editor) {
+    editor.addEventListener("input", function () {
+      hiddenProfile.value = editor.value;
+    });
+  }
+
+  // Sync: hidden profile textarea -> JSON editor (for popup.js compatibility)
+  // Override the value setter to sync changes from popup.js
+  let _value = hiddenProfile.value;
+  Object.defineProperty(hiddenProfile, "value", {
+    get: function () {
+      return _value;
+    },
+    set: function (newValue) {
+      _value = newValue;
+      if (editor) {
+        editor.value = newValue;
+        JSONEditor.onInput(editor);
+      }
+    },
   });
 });

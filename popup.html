@@ -4,166 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>MatchLens</title>
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            font-size: 14px;
-            font-weight: 400;
-            line-height: 1.5;
-            margin: 0;
-            padding: 16px;
-            width: 320px;
-            background: #f3f2ef;
-            color: rgba(0, 0, 0, 0.9);
-        }
-
-        h1,
-        h2 {
-            margin-top: 0;
-            margin-bottom: 4px;
-            text-align: center;
-            color: rgba(0, 0, 0, 0.9);
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
-
-        h1 {
-            font-size: 20px;
-        }
-
-        h2 {
-            font-size: 16px;
-        }
-
-        .info {
-            font-size: 12px;
-            color: rgba(0, 0, 0, 0.6);
-            margin-bottom: 12px;
-            line-height: 1.4;
-            text-align: center;
-            padding-bottom: 12px;
-        }
-
-        #profile,
-        input[type="text"] {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid rgba(0, 0, 0, 0.4);
-            border-radius: 4px;
-            background: #fff;
-            color: rgba(0, 0, 0, 0.9);
-            font-family: inherit;
-            font-size: 14px;
-            transition: border-color 0.15s ease;
-            outline: none;
-        }
-
-        #profile:focus,
-        input[type="text"]:focus {
-            border-color: #0a66c2;
-            box-shadow: 0 0 0 1px #0a66c2;
-        }
-
-        #profile {
-            height: 120px;
-            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-            resize: vertical;
-            font-size: 12px;
-        }
-
-        .buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-
-        button {
-            flex: 1;
-            padding: 6px 16px;
-            font-family: inherit;
-            font-size: 16px;
-            font-weight: 600;
-            border: none;
-            border-radius: 24px;
-            cursor: pointer;
-            transition: background-color 0.15s ease, box-shadow 0.15s ease;
-            height: 36px;
-            white-space: nowrap;
-
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        button:disabled {
-            background-color: rgba(0, 0, 0, 0.08) !important;
-            color: rgba(0, 0, 0, 0.3) !important;
-            cursor: not-allowed !important;
-            box-shadow: none !important;
-        }
-
-        .primary-button {
-            background-color: #0a66c2;
-            color: #ffffff;
-        }
-
-        .primary-button:hover:not(:disabled) {
-            background-color: #004182;
-        }
-
-        .primary-button:active:not(:disabled) {
-            background-color: #003375;
-        }
-
-        .secondary-button {
-            background-color: #ffffff;
-            color: #0a66c2;
-            border: 1.5px solid #0a66c2;
-        }
-
-        .secondary-button:hover:not(:disabled) {
-            background-color: rgba(112, 181, 249, 0.15);
-        }
-
-        .secondary-button:active:not(:disabled) {
-            background-color: rgba(112, 181, 249, 0.3);
-        }
-
-        /* LinkedIn SVG icon */
-        .linkedin-icon {
-            width: 18px;
-            height: 18px;
-            fill: #ffffff;
-            flex-shrink: 0;
-        }
-
-        .footer {
-            font-size: 11px;
-            color: rgba(0, 0, 0, 0.45);
-            margin-top: 10px;
-            text-align: center;
-            line-height: 1.4;
-        }
-
-        #thumbnailImage {
-            width: 72px;
-            height: 72px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #004182;
-        }
-
-        div.thumbnail-container {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 12px;
-        }
-    </style>
+    <link href="css/json-editor.css" rel="stylesheet" />
+    <link href="css/popup.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -173,15 +15,16 @@
         <b>Your LinkedIn Assistant</b>
     </div>
 
-    <!-- Settings -->
-    <textarea id="profile" placeholder="Paste your profile JSON here"></textarea>
+    <!-- JSON Editor for profile -->
+    <div id="profile-container" class="je-editor compact"></div>
+    <textarea id="profile" style="display: none;"></textarea>
     <div class="buttons" id="linkedInSettings">
         <button id="saveSettings" class="secondary-button">Save</button>
     </div>
 
     <!-- Session-->
 
-    <div class="info" style="margin-top: 36px;">
+    <div class="info" style="margin-top: 24px; margin-bottom:0px; padding: 0px" id="loginHint">
         Log in to receive personalized tips to improve your profile and discover job opportunities.
     </div>
     <div class="thumbnail-container">
@@ -216,8 +59,9 @@
         MatchLens helps you polish your LinkedIn profile and guides you to the right job opportunities.
     </div>
 
-    <script src="utils.js"></script>
-    <script src="popup.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/json-editor.js"></script>
+    <script src="js/popup.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,202 @@
+:root {
+  --je-bg:      #ffffff;
+  --je-surface: #f8f9fa;
+  --je-border:  #dee2e6;
+  --je-accent:  #0066cc;
+  --je-green:   #22863a;
+  --je-gold:    #d73a49;
+  --je-red:     #d73a49;
+  --je-purple:  #6f42c1;
+  --je-text:    #24292e;
+  --je-muted:   #6a737d;
+  --je-mono:    'JetBrains Mono', 'Fira Code', monospace;
+  --je-sans:    'Syne', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.je-editor {
+  --bg:      var(--je-bg);
+  --surface: var(--je-surface);
+  --border:  var(--je-border);
+  --accent:  var(--je-accent);
+  --green:   var(--je-green);
+  --gold:    var(--je-gold);
+  --red:     var(--je-red);
+  --purple:  var(--je-purple);
+  --text:    var(--je-text);
+  --muted:   var(--je-muted);
+  --mono:    var(--je-mono);
+  --sans:    var(--je-sans);
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--sans);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── HEADER ── */
+.je-editor header {
+  align-items: center;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  gap: 12px;
+  height: 40px;
+  padding: 0 12px;
+}
+
+.je-editor .logo {
+  background: linear-gradient(135deg, var(--accent), #005c7a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.je-editor .btn {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  gap: 5px;
+  padding: 5px 10px;
+  transition: all 0.2s;
+}
+.je-editor .btn:hover { border-color: var(--accent); color: var(--accent); background: #fff; }
+.je-editor .btn.ok    { border-color: var(--green);  color: var(--green); }
+.je-editor .btn.dl    { background: var(--accent); border-color: var(--accent); color: #fff; }
+.je-editor .btn.dl:hover { background: #0052a3; box-shadow: 0 2px 6px rgba(0,102,204,0.3); }
+
+.je-editor label.btn input { display: none; }
+
+.je-editor .spacer { flex: 1; }
+
+/* ── STATUS ── */
+.je-editor .statusbar {
+  align-items: center;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+  display: flex;
+  flex-shrink: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  gap: 16px;
+  height: 26px;
+  padding: 0 12px;
+}
+.je-editor #err-msg { color: var(--red); margin-left: auto; }
+.je-editor #ok-msg  { color: var(--green); margin-left: auto; }
+
+/* ── EDITOR WRAPPER ── */
+.je-editor .editor-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* highlight layer — sits behind textarea */
+.je-editor #highlight {
+  font-family: var(--mono);
+  font-size: 12px;
+  inset: 0;
+  left: 0;
+  line-height: 1.7;
+  overflow: auto;
+  padding: 12px 14px;
+  pointer-events: none;
+  position: absolute;
+  white-space: pre;
+  word-break: normal;
+  word-spacing: normal;
+  z-index: 1;
+}
+
+/* the actual textarea — transparent so highlight shows through */
+.je-editor #editor {
+  background: transparent;
+  border: none;
+  bottom: 0;
+  caret-color: var(--accent);
+  color: transparent;
+  font-family: var(--mono);
+  font-size: 12px;
+  height: 100%;
+  left: 0;
+  line-height: 1.7;
+  outline: none;
+  overflow: auto;
+  padding: 12px 14px;
+  position: absolute;
+  resize: none;
+  right: 0;
+  spellcheck: false;
+  tab-size: 2;
+  top: 0;
+  white-space: pre;
+  word-break: normal;
+  z-index: 3;
+}
+
+/* syntax colors - light theme optimized */
+.je-editor .s-key    { color: #0066cc; font-weight: 600; }
+.je-editor .s-str    { color: #22863a; }
+.je-editor .s-num    { color: #005cc5; font-weight: 500; }
+.je-editor .s-bool   { color: #d73a49; font-weight: 700; }
+.je-editor .s-null   { color: #6f42c1; font-weight: 500; }
+.je-editor .s-brace  { color: #6a737d; }
+
+/* Compact mode for popup - hides header and statusbar */
+.je-editor.compact header,
+.je-editor.compact .statusbar {
+    display: none !important;
+}
+
+.je-editor.compact .editor-wrap {
+    border: none;
+}
+
+.je-editor.compact {
+    height: 180px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.je-editor #editor::-webkit-scrollbar { width: 8px; height: 8px; }
+.je-editor #editor::-webkit-scrollbar-track { background: var(--surface); }
+.je-editor #editor::-webkit-scrollbar-thumb { background: #c1c8d0; border-radius: 4px; }
+.je-editor #editor::-webkit-scrollbar-thumb:hover { background: #a0a8b0; }
+
+/* toast */
+.je-editor #toast {
+  background: var(--surface);
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  bottom: 12px;
+  color: var(--green);
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0;
+  padding: 8px 14px;
+  pointer-events: none;
+  position: fixed;
+  right: 12px;
+  transform: translateY(6px);
+  transition: all 0.2s;
+  z-index: 99;
+}
+.je-editor #toast.show { opacity: 1; transform: translateY(0); }
