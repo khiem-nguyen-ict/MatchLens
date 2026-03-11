@@ -9,47 +9,59 @@
 </head>
 
 <body>
-    <h1>MatchLens</h1>
+    <div class="position-relative">
+        <h1>MatchLens</h1>
+        <button id="settingsToggle" class="gear-button" title="Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                <path
+                    d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+            </svg>
+        </button>
+    </div>
 
     <div class="info">
         <b>Your LinkedIn Assistant</b>
     </div>
 
-    <!-- JSON Editor for profile -->
-    <div id="profile-container" class="je-editor compact"></div>
-    <textarea id="profile" style="display: none;"></textarea>
-    <div class="buttons" id="linkedInSettings">
-        <button id="saveSettings" class="secondary-button">Save</button>
+    <!-- JSON Editor for profile (hidden by default, shown via gear button) -->
+    <div id="profileEditorSection" style="display: none;">
+        <div id="profile-container" class="je-editor compact"></div>
+        <textarea id="profile" style="display: none;"></textarea>
+        <div class="buttons" id="linkedInSettings">
+            <button id="saveSettings" class="secondary-button">Save</button>
+        </div>
     </div>
 
     <!-- Session-->
+    <div id="linkedInSection">
+        <div class="info" style="margin-top: 24px; margin-bottom:0px; padding: 0px" id="loginHint">
+            Log in to receive personalized tips to improve your profile and discover job opportunities.
+        </div>
+        <div class="thumbnail-container">
+            <img id="thumbnailImage" style="display: none;" class="thumbnail">
+        </div>
+        <div id="profileInfo" class="info" style="display: none;"></div>
+        <div class="buttons" id="linkedInLoggin">
+            <button id="linkedinLogin" class="primary-button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="2 2 20 20" fill="white" width="24" height="24"
+                    style="background-color: #004182; scale: 0.8;">
+                    <path
+                        d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z" />
+                </svg>
+                <span id="linkedinLoginSpan">Connect my LinkedIn account</span>
+            </button>
+        </div>
 
-    <div class="info" style="margin-top: 24px; margin-bottom:0px; padding: 0px" id="loginHint">
-        Log in to receive personalized tips to improve your profile and discover job opportunities.
-    </div>
-    <div class="thumbnail-container">
-        <img id="thumbnailImage" style="display: none;" class="thumbnail">
-    </div>
-    <div id="profileInfo" class="info" style="display: none;"></div>
-    <div class="buttons" id="linkedInLoggin">
-        <button id="linkedinLogin" class="primary-button">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="2 2 20 20" fill="white" width="24" height="24"
-                style="background-color: #004182; scale: 0.8;">
-                <path
-                    d="M20.5 2h-17A1.5 1.5 0 002 3.5v17A1.5 1.5 0 003.5 22h17a1.5 1.5 0 001.5-1.5v-17A1.5 1.5 0 0020.5 2zM8 19H5v-9h3zM6.5 8.25A1.75 1.75 0 118.3 6.5a1.78 1.78 0 01-1.8 1.75zM19 19h-3v-4.74c0-1.42-.6-1.93-1.38-1.93A1.74 1.74 0 0013 14.19a.66.66 0 000 .14V19h-3v-9h2.9v1.3a3.11 3.11 0 012.7-1.4c1.55 0 3.36.86 3.36 3.66z" />
-            </svg>
-            <span id="linkedinLoginSpan">Connect my LinkedIn account</span>
-        </button>
-    </div>
+        <div class="buttons" id="linkedInProfileSection" style="display: none;">
+            <button id="editIntro" class="secondary-button">Edit Intro</button>
+            <button id="editAbout" class="secondary-button">Edit About</button>
+        </div>
 
-    <div class="buttons" id="linkedInProfileSection" style="display: none;">
-        <button id="editIntro" class="secondary-button">Edit Intro</button>
-        <button id="editAbout" class="secondary-button">Edit About</button>
-    </div>
+        <div class="buttons" id="linkedInJobSection" style="display: none;">
+            <button id="findJobs" class="secondary-button">Find Jobs</button>
+            <button id="smartApplyJob" class="secondary-button">Smart Apply</button>
+        </div>
 
-    <div class="buttons" id="linkedInJobSection" style="display: none;">
-        <button id="findJobs" class="secondary-button">Find Jobs</button>
-        <button id="smartApplyJob" class="secondary-button">Smart Apply</button>
     </div>
 
     <div id="linkedInMessage" class="info" style="margin-top: 12px;"></div>

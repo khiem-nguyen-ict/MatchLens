@@ -161,3 +161,37 @@ div.thumbnail-container {
   justify-content: center;
   margin-bottom: 12px;
 }
+
+/* Gear button for settings */
+.gear-button {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.gear-button:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.gear-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Utility classes */
+.position-relative {
+  position: relative;
+}

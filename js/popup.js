@@ -365,8 +365,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Initialize JSON Editor for profile
 document.addEventListener("DOMContentLoaded", function () {
-  const container = document.getElementById("profile-container");
   const hiddenProfile = document.getElementById("profile");
+
+  // Exit early if required elements don't exist
+  if (!hiddenProfile) {
+    console.warn("Profile textarea not found in popup");
+    return;
+  }
 
   // Initialize the JSON editor
   JSONEditor.init("profile-container");
@@ -396,4 +401,22 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     },
   });
+
+  // Toggle profile editor section visibility
+  const settingsToggle = document.getElementById("settingsToggle");
+  if (settingsToggle) {
+    settingsToggle.addEventListener("click", function () {
+      const profileSection = document.getElementById("profileEditorSection");
+      const linkedInSection = document.getElementById("linkedInSection");
+      if (profileSection && linkedInSection) {
+        if (profileSection.style.display === "none") {
+          profileSection.style.display = "block";
+          linkedInSection.style.display = "none";
+        } else {
+          profileSection.style.display = "none";
+          linkedInSection.style.display = "block";
+        }
+      }
+    });
+  }
 });
