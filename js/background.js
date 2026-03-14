@@ -10,32 +10,48 @@ const _supabase = createClient(
 // Sync settings to Supabase — pass accessToken directly to avoid session
 // storage issues in service workers (no localStorage available)
 async function saveSessionSettings(session) {
-  chrome.storage.local.get("profile", (storageData) => {
-    if (storageData.profile) {
-      const { error } = _supabase
-        .from("settings")
-        .upsert({
-          id: session.id,
-          profile: storageData.profile,
-        })
-        .setHeader("Authorization", `Bearer ${session.accessToken}`);
-      if (!error) {
-        console.error("saveSessionSettings, save profile to settings failed");
-      } else {
-        console.info("saveSessionSettings: Save profile successfully!");
-      }
-    } else {
-      console.warn(
-        "saveSessionSettings, save profile: No profile found to save!",
-      );
-    }
+  // Get profile from storage
+  const profile = await new Promise((resolve) => {
+    chrome.storage.local.get("profile", (storageData) => {
+      resolve(storageData.profile);
+    });
   });
 
+  if (!profile) {
+    profile = {
+      message: "Empty profile because you've log out",
+    };
+  }
+
+  // Save profile to settings table if we have one
+  if (profile) {
+    const { error } = await _supabase
+      .from("settings")
+      .upsert({
+        id: session.id,
+        profile: profile,
+      })
+      .setHeader("Authorization", `Bearer ${session.accessToken}`);
+    if (error) {
+      console.error(
+        "saveSessionSettings, save profile to settings failed",
+        error,
+      );
+    } else {
+      console.info("saveSessionSettings: Save profile successfully!");
+    }
+  } else {
+    console.warn(
+      "saveSessionSettings, save profile: No profile found to save!",
+    );
+  }
+
+  // Save session to sessions table
   const { error } = await _supabase
     .from("sessions")
     .upsert({ id: session.id, session })
     .setHeader("Authorization", `Bearer ${session.accessToken}`);
-  if (!error) {
+  if (error) {
     console.error(
       "saveSessionSettings, save session failed - " + error.message,
     );
@@ -45,26 +61,35 @@ async function saveSessionSettings(session) {
 }
 
 async function saveJobDescription(description) {
-    chrome.storage.local.get("linkedinSession", (session) => {
-    if (session) {
-      const { error } = _supabase
-        .from("jobs")
-        .upsert({
-          id: session.id,
-          description,
-        })
-        .setHeader("Authorization", `Bearer ${session.accessToken}`);
-      if (!error) {
-        console.error("saveJobDescription, save job description to jobs failed");
-      } else {
-        console.info("saveJobDescription: Save job description successfully!");
-      }
-    } else {
-      console.warn(
-        "saveJobDescription, save profile: No job description found to save!",
-      );
-    }
+  // Get linkedinSession from storage
+  const session = await new Promise((resolve) => {
+    chrome.storage.local.get("linkedinSession", (storageData) => {
+      resolve(storageData.linkedinSession);
+    });
   });
+
+  // Save job description to jobs table if we have a session
+  if (session) {
+    const { error } = await _supabase
+      .from("jobs")
+      .upsert({
+        id: session.id,
+        description,
+      })
+      .setHeader("Authorization", `Bearer ${session.accessToken}`);
+    if (error) {
+      console.error(
+        "saveJobDescription, save job description to jobs failed",
+        error,
+      );
+    } else {
+      console.info("saveJobDescription: Save job description successfully!");
+    }
+  } else {
+    console.warn(
+      "saveJobDescription, save job description: No job description found to save!",
+    );
+  }
 }
 
 function tryUpdateLoginStatus(session, message, status) {
@@ -162,8 +187,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 ...user,
               };
 
-              saveSessionSettings(session);
-              tryUpdateLoginStatus(session, null, "success");
+               await saveSessionSettings(session);
+               tryUpdateLoginStatus(session, null, "success");
             } else {
               tryUpdateLoginStatus(
                 null,
@@ -220,7 +245,10 @@ function sendTabMessage(tabId, payload) {
     },
     (_response) => {
       if (chrome.runtime.lastError) {
-        console.warn("sendMessage failed:", chrome.runtime.lastError.message);
+        console.warn(
+          "sendMessage failed (Are you opening other Chrome window?):",
+          chrome.runtime.lastError.message,
+        );
       }
     },
   );
