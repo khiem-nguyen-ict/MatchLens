@@ -502,7 +502,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             window.location.href,
           ) ||
           /linkedin\.com\/jobs\/view\//.test(window.location.href) ||
-          /linkedin.com\/jobs\/collections\/remote-jobs\/?currentJobId=/.test(
+          /linkedin.com\/jobs\/collections\//.test(
             window.location.href,
           ),
         profileId: extractProfileId(),
