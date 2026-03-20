@@ -13,6 +13,7 @@
   "host_permissions": [
     "*://www.linkedin.com/*",
     "*://gewcvyaulhlfgxsvuvqj.supabase.co/*",
+    "http://localhost:3014/*",
     "*://cvtailor.adcrew.us/*"
   ],
   "background": {
@@ -30,7 +31,12 @@
   "content_scripts": [
     {
       "matches": ["*://www.linkedin.com/*", "*://cvtailor.adcrew.us/*"],
-      "js": ["js/utils.js", "js/supabase.js", "js/content.js", "js/linkedin.js"],
+      "js": [
+        "js/utils.js",
+        "js/supabase.js",
+        "js/content.js",
+        "js/linkedin.js"
+      ],
       "run_at": "document_idle"
     }
   ]

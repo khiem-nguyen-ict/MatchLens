@@ -6,6 +6,7 @@ const _supabase = createClient(
   "https://gewcvyaulhlfgxsvuvqj.supabase.co",
   "sb_publishable_B1Dlgx2BUeofIblojaXilw_RNET2Eju",
 );
+const CV_TAILOR_URL = "https://cvtailor.adcrew.us"; //"http://localhost:3014"; //
 
 // Sync settings to Supabase — pass accessToken directly to avoid session
 // storage issues in service workers (no localStorage available)
@@ -187,8 +188,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 ...user,
               };
 
-               await saveSessionSettings(session);
-               tryUpdateLoginStatus(session, null, "success");
+              await saveSessionSettings(session);
+              tryUpdateLoginStatus(session, null, "success");
             } else {
               tryUpdateLoginStatus(
                 null,
@@ -236,19 +237,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function sendTabMessage(tabId, payload) {
-  // Add this wrapper to both sendMessage calls
-  chrome.tabs.sendMessage(
-    tabId,
+  chrome.scripting.executeScript(
     {
-      type: "CV_TAILOR_TRANSFER",
-      payload: payload,
-    },
-    (_response) => {
-      if (chrome.runtime.lastError) {
-        console.warn(
-          "sendMessage failed (Are you opening other Chrome window?):",
-          chrome.runtime.lastError.message,
+      target: { tabId: tabId },
+      func: (data) => {
+        window.postMessage(
+          { type: "OPEN_CV_TAILOR", payload: data },
+          window.location.origin,
         );
+      },
+      args: [payload],
+    },
+    () => {
+      if (chrome.runtime.lastError) {
+        console.warn("executeScript failed:", chrome.runtime.lastError.message);
       }
     },
   );
@@ -256,17 +258,18 @@ function sendTabMessage(tabId, payload) {
 
 chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
   if (message.type === "OPEN_CV_TAILOR") {
-    chrome.tabs.query({ url: "https://cvtailor.adcrew.us/*" }, (tabs) => {
+    console.log("Now send tab message to CV Tailor: ", message);
+    chrome.tabs.query({ url: `${CV_TAILOR_URL}/*` }, (tabs) => {
       if (tabs.length > 0) {
-        sendTabMessage(tabs[0].id, message.payload);
+        sendTabMessage(tabs[0].id, message);
         chrome.tabs.update(tabs[0].id, { active: true });
       } else {
-        chrome.tabs.create({ url: "https://cvtailor.adcrew.us" }, (tab) => {
+        chrome.tabs.create({ url: CV_TAILOR_URL }, (tab) => {
           chrome.tabs.onUpdated.addListener(function listener(tabId, info) {
             if (tabId === tab.id && info.status === "complete") {
               chrome.tabs.onUpdated.removeListener(listener);
               setTimeout(() => {
-                sendTabMessage(tab.id, message.payload);
+                sendTabMessage(tab.id, message);
               }, 500);
             }
           });

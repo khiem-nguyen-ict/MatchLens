@@ -80,12 +80,3 @@ function typeaheadPageWorldLogic(selector, newValue) {
     }, 300);
   });
 }
-
-chrome.runtime.onMessage.addListener((message) => {
-  if (message.type === "CV_TAILOR_TRANSFER") {
-    window.postMessage(
-      { type: "CV_TAILOR_TRANSFER", payload: message.payload },
-      "*",
-    );
-  }
-});

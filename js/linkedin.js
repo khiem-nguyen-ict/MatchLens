@@ -500,7 +500,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         isJobDetailsPage:
           /linkedin\.com\/jobs\/search-results\/\?currentJobId=/.test(
             window.location.href,
-          ) || /linkedin\.com\/jobs\/view\//.test(window.location.href),
+          ) ||
+          /linkedin\.com\/jobs\/view\//.test(window.location.href) ||
+          /linkedin.com\/jobs\/collections\/remote-jobs\/?currentJobId=/.test(
+            window.location.href,
+          ),
         profileId: extractProfileId(),
       });
       break;
@@ -520,9 +524,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.storage.local.set({ lastLinkedInJob: { ...data } });
 
         // Find and click the Apply button by its data-view-name attribute
-        const applyBtn = document.querySelector(
-          'a[data-view-name="job-apply-button"]',
-        );
+        const applyBtn = [...document.querySelectorAll("span")]
+          .find((span) => {
+            const text = span.textContent.trim();
+            return text === "Apply" || text === "Easy Apply";
+          })
+          ?.closest("a");
         if (applyBtn && data) {
           applyBtn.click();
           // Call cvtailor
@@ -534,7 +541,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             try {
               chrome.runtime.sendMessage({
                 type: "OPEN_CV_TAILOR",
-                payload: JSON.stringify(data),
+                payload: data,
               });
               // save job
               saveJobDescription(data);
