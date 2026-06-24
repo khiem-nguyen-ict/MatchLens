@@ -133,24 +133,6 @@ function extractLinkedInJobData(root = document) {
     data.employmentType = employmentBtn.innerText.trim();
   }
 
-  /* =========================
-     APPLY LINK
-  ========================== */
-
-  const applyLink = root.querySelector('a[aria-label*="Apply"]');
-  if (applyLink) {
-    data.applyUrl = applyLink.href;
-  }
-
-  /* =========================
-     SAVED STATUS
-  ========================== */
-
-  const savedBtn = root.querySelector('[data-view-name="job-save-button"]');
-  if (savedBtn) {
-    data.savedStatus = savedBtn.innerText.trim();
-  }
-
   return data;
 }
 
@@ -502,9 +484,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             window.location.href,
           ) ||
           /linkedin\.com\/jobs\/view\//.test(window.location.href) ||
-          /linkedin.com\/jobs\/collections\//.test(
-            window.location.href,
-          ),
+          /linkedin.com\/jobs\/collections\//.test(window.location.href),
         profileId: extractProfileId(),
       });
       break;
@@ -524,14 +504,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.storage.local.set({ lastLinkedInJob: { ...data } });
 
         // Find and click the Apply button by its data-view-name attribute
-        const applyBtn = [...document.querySelectorAll("span")]
+        [
+          ...(document
+            .querySelector("div.jobs-details")
+            ?.querySelectorAll("span") || []),
+        ]
           .find((span) => {
             const text = span.textContent.trim();
             return text === "Apply" || text === "Easy Apply";
           })
-          ?.closest("a");
+          ?.closest("button.jobs-apply-button-id");
         if (applyBtn && data) {
-          applyBtn.click();
+          //applyBtn.click();
           // Call cvtailor
           // content_script.js injected into cvtailor.adcrew.us
           // Extension popup.js
@@ -563,7 +547,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       } catch (e) {
         chrome.runtime.sendMessage({
           type: "PROGRESS_STATUS",
-          status: `Unable to read thge job description.`,
+          status: `Unable to read the job description.`,
           isError: true,
         });
       }

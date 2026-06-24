@@ -1,10 +1,11 @@
 importScripts("supabase.js");
+importScripts("config.js");
 
 // ---- Initialize Supabase at the top level so it's accessible everywhere ----
 const { createClient } = supabase;
 const _supabase = createClient(
   "https://gewcvyaulhlfgxsvuvqj.supabase.co",
-  "sb_publishable_B1Dlgx2BUeofIblojaXilw_RNET2Eju",
+  CONFIG.SUPABASE_PUBLISHABLE_KEY,
 );
 const CV_TAILOR_URL = "https://cvtailor.adcrew.us"; //"http://localhost:3014"; //
 
